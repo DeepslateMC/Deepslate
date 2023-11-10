@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com.com>
+Date: Thu, 9 Nov 2023 09:34:56 +0300
+Subject: [PATCH] Simple version fetcher
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+index 1e81801e5701b08feedd840c1e1663ae26507c16..661db7845f65b20d63342c5174554d02062fd96b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+@@ -485,7 +485,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+ 
+     @Override
+     public com.destroystokyo.paper.util.VersionFetcher getVersionFetcher() {
+-        return new com.destroystokyo.paper.PaperVersionFetcher(); // Pufferfish // Purpur
++        return new org.deepslatemc.deepslate.DeepslateVersionFetcher(); // Pufferfish // Purpur // Deepslate
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java b/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7dd13fdd42832120556dabd3b8086b30ae509d9b
+--- /dev/null
++++ b/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java
+@@ -0,0 +1,18 @@
++package org.deepslatemc.deepslate;
++
++import com.destroystokyo.paper.util.VersionFetcher;
++import net.kyori.adventure.text.Component;
++import net.kyori.adventure.text.format.NamedTextColor;
++import org.jetbrains.annotations.NotNull;
++
++public class DeepslateVersionFetcher implements VersionFetcher {
++    @Override
++    public long getCacheTime() {
++        return Long.MAX_VALUE;
++    }
++
++    @Override
++    public @NotNull Component getVersionMessage(@NotNull String serverVersion) {
++        return Component.text("Deepslate: ").append(Component.text(serverVersion, NamedTextColor.GREEN));
++    }
++}
