@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Fri, 10 Nov 2023 22:26:52 +0900
+Subject: [PATCH] Improve Task Information
+
+When shutting down the server, tasks may not cancel properly due to some
+plugin not closing their tasks.
+Finding out which task is scheduled where and not closed however has
+proven troublesome.
+
+To fix this, this patch adds the ability to both plugins and servers to
+fetch the implementation class type of overdue tasks from BukkitWorker
+instances which are displayed in the nag message on shutdown.
+
+ktp
+Copyright (C) 2023  Bjarne Koll
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 5d0a051f7898515ea5ec629d9180890e449415f8..08dd2d293cb4359b262a51d658e22a646ed44ceb 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -1136,9 +1136,10 @@ public final class CraftServer implements Server {
+         for (BukkitWorker worker : overdueWorkers) {
+             Plugin plugin = worker.getOwner();
+             this.getLogger().log(Level.SEVERE, String.format(
+-                "Nag author(s): '%s' of '%s' about the following: %s",
++                "Nag author(s): '%s' of '%s' (%s) about the following: %s", // Deepslate - improved task information
+                 plugin.getDescription().getAuthors(),
+                 plugin.getDescription().getFullName(),
++                worker.getTaskClass().getName(), // Shuvi - improved task information
+                 "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin"
+             ));
+             if (console.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread(worker.getThread(), "still running"); // Paper
+@@ -1167,9 +1168,10 @@ public final class CraftServer implements Server {
+         for (BukkitWorker worker : overdueWorkers) {
+             Plugin plugin = worker.getOwner();
+             getLogger().log(Level.SEVERE, String.format(
+-                "Nag author(s): '%s' of '%s' about the following: %s",
++                "Nag author(s): '%s' of '%s' (%s) about the following: %s", // Deepslate - improved task information
+                 plugin.getPluginMeta().getAuthors(),
+                 plugin.getPluginMeta().getDisplayName(),
++                worker.getTaskClass().getName(), // Deepslate - improved task information
+                 "This plugin is not properly shutting down its async tasks when it is being shut down. This task may throw errors during the final shutdown logs and might not complete before process dies."
+             ));
+             getLogger().log(Level.SEVERE, String.format("%s Stacktrace", worker.getThread().getName()));
+diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftAsyncTask.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftAsyncTask.java
+index 6d66f83afbeb650b10669fd7eeb24a315951fa86..3fba179ba8c1641686032dc9886ae887ffc4fc6e 100644
+--- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftAsyncTask.java
++++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftAsyncTask.java
+@@ -50,6 +50,13 @@ class CraftAsyncTask extends CraftTask {
+                     public Plugin getOwner() {
+                         return CraftAsyncTask.this.getOwner();
+                     }
++
++                    // Deepslate start
++                    @Override
++                    public Class<?> getTaskClass() {
++                        return CraftAsyncTask.this.getTaskClass();
++                    }
++                    // Deepslate end
+                 });
+         }
+         Throwable thrown = null;
