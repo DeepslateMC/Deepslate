@@ -1,6 +1,1 @@
-[Purpur]: https://purpurmc.org
-
-## Deepslate
-Template to create a mantainable fork of [Purpur].
-
-This readme will eventually contain instructions regarding the patch system. For now, visit Purpur's [CONTRIBUTING.md](https://github.com/PurpurMC/Purpur/blob/HEAD/CONTRIBUTING.md).
+[![Powered by](https://img.shields.io/badge/Powered_by-Deepslate_project-ee6aa7.svg?style=flat)](https://github.com/DeepslateMC/Deepslate)
