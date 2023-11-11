@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: NONPLAYT <76615486+NONPLAYT@users.noreply.github.com>
-Date: Mon, 12 Jun 2023 15:31:21 +0300
-Subject: [PATCH] Add missing purpur config options
+From: Pancakse <pancakseyt@gmail.com>
+Date: Sat, 11 Nov 2023 15:31:21 +0300
+Subject: [PATCH] Add Missing Purpur Config Options
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java b/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
