@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Thu, 30 Mar 2023 09:40:23 +0300
+Subject: [PATCH] No spam logs
+
+
+diff --git a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+index 6638d769a34287d54b22e4416003556915e153f1..327768df28d4c217c5b610a457e65c90bc9e78fc 100644
+--- a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
++++ b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+@@ -562,7 +562,7 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+ 
+                 if (d10 - d9 > Math.max(100.0D, Math.pow((double) (org.spigotmc.SpigotConfig.movedTooQuicklyMultiplier * (float) i * speed), 2)) && !this.isSingleplayerOwner()) {
+                 // CraftBukkit end
+-                    ServerGamePacketListenerImpl.LOGGER.warn("{} (vehicle of {}) moved too quickly! {},{},{}", new Object[]{entity.getName().getString(), this.player.getName().getString(), d6, d7, d8});
++                    // ServerGamePacketListenerImpl.LOGGER.warn("{} (vehicle of {}) moved too quickly! {},{},{}", new Object[]{entity.getName().getString(), this.player.getName().getString(), d6, d7, d8}); // Deepslate - no spam logs
+                     this.send(new ClientboundMoveVehiclePacket(entity));
+                     return;
+                 }
+@@ -598,7 +598,7 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+ 
+                 if (d10 > org.spigotmc.SpigotConfig.movedWronglyThreshold) { // Spigot
+                     flag2 = true; // Paper - diff on change, this should be moved wrongly
+-                    ServerGamePacketListenerImpl.LOGGER.warn("{} (vehicle of {}) moved wrongly! {}", new Object[]{entity.getName().getString(), this.player.getName().getString(), Math.sqrt(d10)});
++                    // ServerGamePacketListenerImpl.LOGGER.warn("{} (vehicle of {}) moved wrongly! {}", new Object[]{entity.getName().getString(), this.player.getName().getString(), Math.sqrt(d10)}); // Deepslate - no spam logs
+                 }
+                 Location curPos = this.getCraftPlayer().getLocation(); // Spigot
+ 
+@@ -1441,7 +1441,7 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+                                     io.papermc.paper.event.player.PlayerFailMoveEvent event = fireFailMove(io.papermc.paper.event.player.PlayerFailMoveEvent.FailReason.MOVED_TOO_QUICKLY,
+                                         toX, toY, toZ, toYaw, toPitch, true);
+                                     if (!event.isAllowed()) {
+-                                        if (event.getLogWarning())
++                                        if (false && event.getLogWarning()) // Whitehorse - no spam logs
+                                     ServerGamePacketListenerImpl.LOGGER.warn("{} moved too quickly! {},{},{}", new Object[]{this.player.getName().getString(), d6, d7, d8});
+                                     this.teleport(this.player.getX(), this.player.getY(), this.player.getZ(), this.player.getYRot(), this.player.getXRot());
+                                     return;
+@@ -1516,7 +1516,7 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+                                     toX, toY, toZ, toYaw, toPitch, true);
+                                 if (!event.isAllowed()) {
+                                 flag2 = true; // Paper - diff on change, this should be moved wrongly
+-                                    if (event.getLogWarning())
++                                    if (false && event.getLogWarning()) // Deepslate - no spam logs
+                                         ServerGamePacketListenerImpl.LOGGER.warn("{} moved wrongly!, ({})", this.player.getName().getString(), d11); // Purpur
+                                 }
+                                 // Paper end
