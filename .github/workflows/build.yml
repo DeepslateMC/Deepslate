@@ -42,7 +42,8 @@ jobs:
           token: ${{ secrets.TOKEN }}
           files: build/libs/*.jar
       - name: Github Releases To Discord
-      uses: tsickert/discord-webhook@v5.3.0
-      with:
-        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-        raw-data: ${{ env.discordmes }}
+        continue-on-error: true
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          raw-data: ${{ env.discordmes }}
