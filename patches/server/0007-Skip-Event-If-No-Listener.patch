@@ -1,0 +1,50 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancaskeyt@gmail.com>
+Date: Sat, 11 Nov 2023 22:38:24 +0900
+Subject: [PATCH] Skip event if no listeners
+
+Patina
+Copyright (C) 2023  foss-mc
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
+index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..2ba5c8f76a5e72ee4d9f04c27b0e5c9c47faab3b 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
+@@ -36,14 +36,22 @@ class PaperEventManager {
+ 
+     // SimplePluginManager
+     public void callEvent(@NotNull Event event) {
++        // Deepslate start - skip event if no listeners
++        HandlerList handlers = event.getHandlers();
++        RegisteredListener[] listeners = handlers.getRegisteredListeners();
++        if (listeners.length == 0) return;
++        // Deepslate end
++
+         if (event.isAsynchronous() && this.server.isPrimaryThread()) {
+             throw new IllegalStateException(event.getEventName() + " may only be triggered asynchronously.");
+         } else if (!event.isAsynchronous() && !this.server.isPrimaryThread() && !this.server.isStopping()) {
+             throw new IllegalStateException(event.getEventName() + " may only be triggered synchronously.");
+         }
+ 
+-        HandlerList handlers = event.getHandlers();
+-        RegisteredListener[] listeners = handlers.getRegisteredListeners();
++        // Deepslate start - moved up
++        // HandlerList handlers = event.getHandlers();
++        // RegisteredListener[] listeners = handlers.getRegisteredListeners();
++        // Deepslate end
+ 
+         for (RegisteredListener registration : listeners) {
+             if (!registration.getPlugin().isEnabled()) {
