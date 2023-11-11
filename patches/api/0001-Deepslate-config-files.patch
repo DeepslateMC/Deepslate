@@ -12,7 +12,7 @@ index aaef58468a3c31f35e5067ed4263e9dd3fbddddd..414fc9220a181b82abdd0d2070dd6b68
          }
          // Purpur end
  
-+        // Deepslatw start
++        // Deepslate start
 +        @NotNull
 +        public org.bukkit.configuration.file.YamlConfiguration getDeepslateConfig() {
 +            throw new UnsupportedOperationException("Not supported yet.");

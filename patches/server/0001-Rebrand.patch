@@ -27,7 +27,7 @@ index e372110a189857056e4fae3cd1d996ce8cb69493..73b65764d50353f5204b244aa27bf31d
              "Main-Class" to "org.bukkit.craftbukkit.Main",
              "Implementation-Title" to "CraftBukkit",
 -            "Implementation-Version" to "git-Purpur-$implementationVersion", // Pufferfish // Purpur
-+            "Implementation-Version" to "git-Deepslatw-$implementationVersion", // Pufferfish // Purpur // Deepslate
++            "Implementation-Version" to "git-Deepslate-$implementationVersion", // Pufferfish // Purpur // Deepslate
              "Implementation-Vendor" to date, // Paper
              "Specification-Title" to "Bukkit",
              "Specification-Version" to project.version,
