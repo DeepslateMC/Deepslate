@@ -1,0 +1,324 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: NONPLAYT <76615486+NONPLAYT@users.noreply.github.com>
+Date: Mon, 12 Jun 2023 15:31:21 +0300
+Subject: [PATCH] Add missing purpur config options
+
+
+diff --git a/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java b/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
+index c783ce59ea766e6c46a3313628b961f27e01ee8b..4f6b6967f7f632752fcc4faac47dca51cfac1b79 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
++++ b/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
+@@ -152,6 +152,23 @@ public class Allay extends PathfinderMob implements InventoryCarrier, VibrationS
+     }
+     // Purpur end
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.allayTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.allayAlwaysDropExp;
++    }
++
++    @Override
++    public void initAttributes() {
++        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level().purpurConfig.allayMaxHealth);
++    }
++    // Deepslate end
++
+     @Override
+     protected Brain.Provider<Allay> brainProvider() {
+         return Brain.provider(Allay.MEMORY_TYPES, Allay.SENSOR_TYPES);
+diff --git a/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java b/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
+index 1d84135c709a90843b1ee34fb47508e78a7ce95d..9b2522872d428d41dd61f934e3c70b6247e3f285 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
++++ b/src/main/java/net/minecraft/world/entity/animal/camel/Camel.java
+@@ -97,6 +97,18 @@ public class Camel extends AbstractHorse implements PlayerRideableJumping, Saddl
+     }
+     // Purpur end
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.camelTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.camelAlwaysDropExp;
++    }
++    // Deepslate end
++
+     @Override
+     public void addAdditionalSaveData(CompoundTag nbt) {
+         super.addAdditionalSaveData(nbt);
+diff --git a/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java b/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
+index 9417ce67cc231d5bfa6813f78ec27196eed423c8..fba383652611052877d8a9de0a41aee5ef1a861a 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
++++ b/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
+@@ -142,6 +142,23 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
+         return this.level().purpurConfig.frogBreedingTicks;
+     }
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.frogTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.frogAlwaysDropExp;
++    }
++
++    @Override
++    public void initAttributes() {
++        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level().purpurConfig.frogMaxHealth);
++    }
++    // Deepslate end
++
+     @Override
+     protected Brain.Provider<Frog> brainProvider() {
+         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
+diff --git a/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java b/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
+index 6b012bea26e8ef0c04571f43da67f6e108188830..2aa089f51100e67120f688d09fd3510f5abfad69 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
++++ b/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
+@@ -89,6 +89,23 @@ public class Tadpole extends AbstractFish {
+     }
+     // Purpur end
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.tadpoleTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.tadpoleAlwaysDropExp;
++    }
++
++    @Override
++    public void initAttributes() {
++        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level().purpurConfig.tadpoleMaxHealth);
++    }
++    // Deepslate end
++
+     @Override
+     protected PathNavigation createNavigation(Level world) {
+         return new WaterBoundPathNavigation(this, world);
+diff --git a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+index dcb10e2ea1e0c7d0479adae5bc2ff57ece172aad..b6754b9cdf3924aa5b89473282009e5341e51a1f 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
++++ b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+@@ -118,6 +118,18 @@ public class Sniffer extends Animal {
+         return this.level().purpurConfig.snifferBreedingTicks;
+     }
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.snifferTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.snifferAlwaysDropExp;
++    }
++    // Deepslate end
++
+     // CraftBukkit start - SPIGOT-7295: moved from constructor to appropriate location
+     @Override
+     protected void defineSynchedData() {
+diff --git a/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java b/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
+index 5e66c2bd3807619cadee5b7081d93d21886e2806..ff098fc029a2a8bedbf5d08670fda78fb724dd38 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
++++ b/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
+@@ -148,6 +148,23 @@ public class Warden extends Monster implements VibrationSystem {
+     }
+     // Purpur end
+ 
++    // Deepslate start - Add missing purpur config options
++    @Override
++    public boolean isSensitiveToWater() {
++        return level().purpurConfig.wardenTakeDamageFromWater;
++    }
++
++    @Override
++    public boolean isAlwaysExperienceDropper() {
++        return level().purpurConfig.wardenAlwaysDropExp;
++    }
++
++    @Override
++    public void initAttributes() {
++        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(level().purpurConfig.wardenMaxHealth);
++    }
++    // Deepslate end
++
+     @Override
+     public Packet<ClientGamePacketListener> getAddEntityPacket() {
+         return new ClientboundAddEntityPacket(this, this.hasPose(Pose.EMERGING) ? 1 : 0);
+diff --git a/src/main/java/net/minecraft/world/entity/vehicle/ChestBoat.java b/src/main/java/net/minecraft/world/entity/vehicle/ChestBoat.java
+index e88c39d405fc7068db64ad34a03dec8d559e749e..35f0677a31be938a87314c534d63bc24faec7416 100644
+--- a/src/main/java/net/minecraft/world/entity/vehicle/ChestBoat.java
++++ b/src/main/java/net/minecraft/world/entity/vehicle/ChestBoat.java
+@@ -30,6 +30,9 @@ import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+ import org.bukkit.entity.HumanEntity;
+ import org.bukkit.inventory.InventoryHolder;
+ // CraftBukkit end
++// Deepslate start
++import org.purpurmc.purpur.PurpurConfig;
++// Deepslate end
+ 
+ public class ChestBoat extends Boat implements HasCustomInventoryScreen, ContainerEntity {
+ 
+@@ -41,7 +44,7 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
+ 
+     public ChestBoat(EntityType<? extends Boat> type, Level world) {
+         super(type, world);
+-        this.itemStacks = NonNullList.withSize(27, ItemStack.EMPTY);
++        this.itemStacks = NonNullList.withSize(PurpurConfig.chestBoatRows * 9, ItemStack.EMPTY); // Deepslate start - Add missing purpur config options
+     }
+ 
+     public ChestBoat(Level world, double d0, double d1, double d2) {
+@@ -160,7 +163,7 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
+ 
+     @Override
+     public int getContainerSize() {
+-        return 27;
++        return PurpurConfig.chestBoatRows * 9; // Deepslate - Add missing purpur config options
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
+index d8d19567cf49b41d730a936d46c8e37e5aec2f07..64459e4adb50304070b6c9c100ef922779df356d 100644
+--- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
++++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
+@@ -328,6 +328,7 @@ public class PurpurConfig {
+     }
+ 
+     public static int barrelRows = 3;
++    public static int chestBoatRows = 3; // Deepslate - Add missing purpur config options
+     public static boolean enderChestSixRows = false;
+     public static boolean enderChestPermissionRows = false;
+     public static boolean cryingObsidianValidForPortalFrame = false;
+@@ -368,6 +369,7 @@ public class PurpurConfig {
+             case 1 -> 9;
+             default -> 27;
+         });
++        chestBoatRows = getInt("settings.blocks.chest_boat.rows", chestBoatRows); // Deepslate - Add missing purpur config options
+         enderChestSixRows = getBoolean("settings.blocks.ender_chest.six-rows", enderChestSixRows);
+         org.bukkit.event.inventory.InventoryType.ENDER_CHEST.setDefaultSize(enderChestSixRows ? 54 : 27);
+         enderChestPermissionRows = getBoolean("settings.blocks.ender_chest.use-permissions-for-rows", enderChestPermissionRows);
+diff --git a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
+index 64e172e6cbfb8134c2b36bce8279e1ef44085257..20d3b1a0892053544c9f338f88297a72d3580962 100644
+--- a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
++++ b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
+@@ -1115,7 +1115,17 @@ public class PurpurWorldConfig {
+     public boolean allayRidableInWater = true;
+     public boolean allayControllable = true;
+     public List<String> allayRespectNBT = new ArrayList<>();
++    // Deepslate start - Add missing purpur config options
++    public double allayMaxHealth = 20.0D;
++    public boolean allayTakeDamageFromWater = false;
++    public boolean allayAlwaysDropExp = false;
++    // Deepslate end
+     private void allaySettings() {
++        // Deepslate start - Add missing purpur config options
++        allayMaxHealth = getDouble("mobs.allay.max-health", allayMaxHealth);
++        allayTakeDamageFromWater = getBoolean("mobs.allay.take-damage-from-water", allayTakeDamageFromWater);
++        allayAlwaysDropExp = getBoolean("mobs.allay.always-drop-exp", allayAlwaysDropExp);
++        // Deepslate end
+         allayRidable = getBoolean("mobs.allay.ridable", allayRidable);
+         allayRidableInWater = getBoolean("mobs.allay.ridable-in-water", allayRidableInWater);
+         allayControllable = getBoolean("mobs.allay.controllable", allayControllable);
+@@ -1234,7 +1244,15 @@ public class PurpurWorldConfig {
+     public double camelMovementSpeedMin = 0.09D;
+     public double camelMovementSpeedMax = 0.09D;
+     public int camelBreedingTicks = 6000;
++    // Deepslate start - Add missing purpur config options
++    public boolean camelTakeDamageFromWater = false;
++    public boolean camelAlwaysDropExp = false;
++    // Deepslate end
+     private void camelSettings() {
++        // Deepslate start - Add missing purpur config options
++        camelTakeDamageFromWater = getBoolean("mobs.camel.takes-damage-from-water", camelTakeDamageFromWater);
++        camelAlwaysDropExp = getBoolean("mobs.camel.always-drop-exp", camelAlwaysDropExp);
++        // Deepslate end
+         camelRidableInWater = getBoolean("mobs.camel.ridable-in-water", camelRidableInWater);
+         camelMaxHealthMin = getDouble("mobs.camel.attributes.max_health.min", camelMaxHealthMin);
+         camelMaxHealthMax = getDouble("mobs.camel.attributes.max_health.max", camelMaxHealthMax);
+@@ -1662,7 +1680,17 @@ public class PurpurWorldConfig {
+     public boolean frogControllable = true;
+     public float frogRidableJumpHeight = 0.65F;
+     public int frogBreedingTicks = 6000;
++    // Deepslate start - Add missing purpur config options
++    public double frogMaxHealth = 10.0D;
++    public boolean frogTakeDamageFromWater = false;
++    public boolean frogAlwaysDropExp = false;
++    // Deepslate end
+     private void frogSettings() {
++        // Deepslate start - Add missing purpur config options
++        frogMaxHealth = getDouble("mobs.frog.attributes.max_health", frogMaxHealth);
++        frogTakeDamageFromWater = getBoolean("mobs.frog.takes-damage-from-water", frogTakeDamageFromWater);
++        frogAlwaysDropExp = getBoolean("mobs.frog.always-drop-exp", frogAlwaysDropExp);
++        // Deepslate end
+         frogRidable = getBoolean("mobs.frog.ridable", frogRidable);
+         frogRidableInWater = getBoolean("mobs.frog.ridable-in-water", frogRidableInWater);
+         frogControllable = getBoolean("mobs.frog.controllable", frogControllable);
+@@ -2615,7 +2643,15 @@ public class PurpurWorldConfig {
+     public boolean snifferControllable = true;
+     public double snifferMaxHealth = 14.0D;
+     public int snifferBreedingTicks = 6000;
++    // Deepslate start - Add missing purpur config options
++    public boolean snifferTakeDamageFromWater = false;
++    public boolean snifferAlwaysDropExp = false;
++    // Deepslate end
+     private void snifferSettings() {
++        // Deepslate start - Add missing purpur config options
++        snifferTakeDamageFromWater = getBoolean("mobs.sniffer.takes-damage-from-water", snifferTakeDamageFromWater);
++        snifferAlwaysDropExp = getBoolean("mobs.sniffer.always-drop-exp", snifferAlwaysDropExp);
++        // Deepslate end
+         snifferRidable = getBoolean("mobs.sniffer.ridable", snifferRidable);
+         snifferRidableInWater = getBoolean("mobs.sniffer.ridable-in-water", snifferRidableInWater);
+         snifferControllable = getBoolean("mobs.sniffer.controllable", snifferControllable);
+@@ -2714,7 +2750,17 @@ public class PurpurWorldConfig {
+     public boolean tadpoleRidable = false;
+     public boolean tadpoleRidableInWater = true;
+     public boolean tadpoleControllable = true;
++    // Deepslate start - Add missing purpur config options
++    public double tadpoleMaxHealth = 10.0D;
++    public boolean tadpoleTakeDamageFromWater = false;
++    public boolean tadpoleAlwaysDropExp = false;
++    // Deepslate end
+     private void tadpoleSettings() {
++        // Deepslate start - Add missing purpur config options
++        tadpoleMaxHealth = getDouble("mobs.tadpole.attributes.max_health", tadpoleMaxHealth);
++        tadpoleTakeDamageFromWater = getBoolean("mobs.tadpole.takes-damage-from-water", tadpoleTakeDamageFromWater);
++        tadpoleAlwaysDropExp = getBoolean("mobs.tadpole.always-drop-exp", tadpoleAlwaysDropExp);
++        // Deepslate end
+         tadpoleRidable = getBoolean("mobs.tadpole.ridable", tadpoleRidable);
+         tadpoleRidableInWater = getBoolean("mobs.tadpole.ridable-in-water", tadpoleRidableInWater);
+         tadpoleControllable = getBoolean("mobs.tadpole.controllable", tadpoleControllable);
+@@ -2924,7 +2970,17 @@ public class PurpurWorldConfig {
+     public boolean wardenRidable = false;
+     public boolean wardenRidableInWater = true;
+     public boolean wardenControllable = true;
++    // Deepslate start - Add missing purpur config options
++    public double wardenMaxHealth = 500.0D;
++    public boolean wardenTakeDamageFromWater = false;
++    public boolean wardenAlwaysDropExp = false;
++    // Deepslate end
+     private void wardenSettings() {
++        // Deepslate start - Add missing purpur config options
++        wardenMaxHealth = getDouble("mobs.warden.attributes.max_health", wardenMaxHealth);
++        wardenTakeDamageFromWater = getBoolean("mobs.warden.takes-damage-from-water", wardenTakeDamageFromWater);
++        wardenAlwaysDropExp = getBoolean("mobs.warden.always-drop-exp", wardenAlwaysDropExp);
++        // Deepslate end
+         wardenRidable = getBoolean("mobs.warden.ridable", wardenRidable);
+         wardenRidableInWater = getBoolean("mobs.warden.ridable-in-water", wardenRidableInWater);
+         wardenControllable = getBoolean("mobs.warden.controllable", wardenControllable);
