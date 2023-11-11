@@ -41,3 +41,8 @@ jobs:
           body: "[\"artifact_name\"=deepslate-launcher.jar]/[\"changes\"=${{ github.event.head_commit.message }}]/[\"commit_hash\"=${{ env.COMMIT_HASH }}]/[\"version\"=MC1.20.2]"
           token: ${{ secrets.TOKEN }}
           files: build/libs/*.jar
+      - name: Github Releases To Discord
+      uses: tsickert/discord-webhook@v5.3.0
+      with:
+        webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+        raw-data: ${{ env.discordmes }}
