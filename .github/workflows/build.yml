@@ -46,4 +46,4 @@ jobs:
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          raw-data: ${{ env.discordmes }}
+          content: "Deepslate has recieved a new update! Please download on our Github page."
