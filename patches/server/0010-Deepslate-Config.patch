@@ -31,8 +31,8 @@ index 0000000000000000000000000000000000000000..6ab4a0ae2a0f63e4dfdb36a561ccda2a
 +    public DeepslateCommand(String name) {
 +        super(name);
 +        this.description = "Deepslate related commands";
-+        this.usageMessage = "/divinemc [reload | version]";
-+        this.setPermission("bukkit.command.divinemc");
++        this.usageMessage = "/deepslate [reload | version]";
++        this.setPermission("bukkit.command.deepslate");
 +    }
 +
 +    @Override
@@ -59,9 +59,9 @@ index 0000000000000000000000000000000000000000..6ab4a0ae2a0f63e4dfdb36a561ccda2a
 +            Command.broadcastCommandMessage(sender, ChatColor.RED + "If you encounter any issues please use the /stop command to restart your server.");
 +
 +            MinecraftServer console = MinecraftServer.getServer();
-+            DeepslateConfig.init((File) console.options.valueOf("divinemc-settings"));
++            DeepslateConfig.init((File) console.options.valueOf("deepslate-settings"));
 +            for (ServerLevel level : console.getAllLevels()) {
-+                level.divinemcConfig.init();
++                level.deepslateConfig.init();
 +                level.resetBreedingCooldowns();
 +            }
 +            console.server.reloadCount++;
@@ -113,7 +113,7 @@ index 0000000000000000000000000000000000000000..9e802fbe8e5f1a3c24cb6bc9254c72a2
 +            + "join us in our Discord server.\n"
 +            + "\n"
 +            + "Discord: https://discord.gg/p7cxhw7E2M \n"
-+            + "Docs: https://divinemc.bxteam.gq/docs \n"
++            + "Docs: https://deepslate.bxteam.gq/docs \n"
 +            + "New builds: https://github.com/Deepslate/Deepslate/releases/latest";
 +    private static File CONFIG_FILE;
 +    public static YamlConfiguration config;
@@ -130,7 +130,7 @@ index 0000000000000000000000000000000000000000..9e802fbe8e5f1a3c24cb6bc9254c72a2
 +            config.load(CONFIG_FILE);
 +        } catch (IOException ignore) {
 +        } catch (InvalidConfigurationException ex) {
-+            Bukkit.getLogger().log(Level.SEVERE, "Could not load divinemc.yml, please correct your syntax errors", ex);
++            Bukkit.getLogger().log(Level.SEVERE, "Could not load deepslate.yml, please correct your syntax errors", ex);
 +            throw Throwables.propagate(ex);
 +        }
 +        config.options().header(HEADER);
@@ -138,7 +138,7 @@ index 0000000000000000000000000000000000000000..9e802fbe8e5f1a3c24cb6bc9254c72a2
 +        verbose = getBoolean("verbose", false);
 +
 +        commands = new HashMap<>();
-+        commands.put("divinemc", new DeepslateCommand("divinemc"));
++        commands.put("deepslate", new DeepslateCommand("deepslate"));
 +
 +        version = getInt("config-version", 3);
 +        set("config-version", 3);
@@ -336,7 +336,7 @@ index a51306bb36d403ab627cd8b2fc8d8f7a3e6ca918..547c60bdb71ef7641273348b836f2fee
  
 +        // Deepslate start
 +        try {
-+            org.deepslatemc.deepslate.configuration.DeepslateConfig.init((java.io.File) options.valueOf("divinemc-settings"));
++            org.deepslatemc.deepslate.configuration.DeepslateConfig.init((java.io.File) options.valueOf("deepslate-settings"));
 +        } catch (Exception e) {
 +            DedicatedServer.LOGGER.error("Unable to load server configuration", e);
 +            return false;
@@ -364,7 +364,7 @@ index 25540a7f5631acd856726cdb44bace9be7dab401..4ed2a063f21ae4bb840e5ec1f84e0422
  
      public final com.destroystokyo.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
      public final org.purpurmc.purpur.PurpurWorldConfig purpurConfig; // Purpur
-+    public final org.deepslatemc.deepslate.configuration.DeepslateWorldConfig divinemcConfig; // Deepslate
++    public final org.deepslatemc.deepslate.configuration.DeepslateWorldConfig deepslateConfig; // Deepslate
      public final co.aikar.timings.WorldTimingsHandler timings; // Paper
      public static BlockPos lastPhysicsProblem; // Spigot
      private org.spigotmc.TickLimiter entityLimiter;
@@ -372,7 +372,7 @@ index 25540a7f5631acd856726cdb44bace9be7dab401..4ed2a063f21ae4bb840e5ec1f84e0422
          this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
          this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
          this.purpurConfig = new org.purpurmc.purpur.PurpurWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Purpur
-+        this.divinemcConfig = new DeepslateWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Deepslate
++        this.deepslateConfig = new DeepslateWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Deepslate
          this.playerBreedingCooldowns = this.getNewBreedingCooldownCache(); // Purpur
          this.generator = gen;
          this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
@@ -392,7 +392,7 @@ index 0ac0184c4de16f8a6f2b83dd344e0607a5c6d8f5..b1adcc3a1fc14bd0daa9059d124e533a
          org.spigotmc.SpigotConfig.init((File) this.console.options.valueOf("spigot-settings")); // Spigot
          this.console.paperConfigurations.reloadConfigs(this.console);
          org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur
-+        org.deepslatemc.deepslate.configuration.DeepslateConfig.init((File) console.options.valueOf("divinemc-settings")); // Deepslate
++        org.deepslatemc.deepslate.configuration.DeepslateConfig.init((File) console.options.valueOf("deepslate-settings")); // Deepslate
          for (ServerLevel world : this.console.getAllLevels()) {
              // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
              world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters, config.spawnAnimals); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
@@ -400,7 +400,7 @@ index 0ac0184c4de16f8a6f2b83dd344e0607a5c6d8f5..b1adcc3a1fc14bd0daa9059d124e533a
              }
              world.spigotConfig.init(); // Spigot
              world.purpurConfig.init(); // Purpur
-+            world.divinemcConfig.init(); // Deepslate
++            world.deepslateConfig.init(); // Deepslate
          }
  
          Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
@@ -435,10 +435,10 @@ index f4bb177984f0c0223dbadf4fc7562040e4f74d6d..eef4a7ec24fd1be69e737c74f1f42672
                  // Purpur end
  
 +                // Deepslate start
-+                acceptsAll(asList("divinemc", "divinemc-settings"), "File for divinemc settings")
++                acceptsAll(asList("deepslate", "deepslate-settings"), "File for deepslate settings")
 +                        .withRequiredArg()
 +                        .ofType(File.class)
-+                        .defaultsTo(new File("divinemc.yml"))
++                        .defaultsTo(new File("deepslate.yml"))
 +                        .describedAs("Yml file");
 +                // Deepslate end
 +
