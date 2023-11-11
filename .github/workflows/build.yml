@@ -38,7 +38,7 @@ jobs:
         with:
           name: Build ${{ github.run_number }}
           tag_name: ${{ github.run_number }}
-          body: "[\"artifact_name\"=deepslate-launcher.jar]/[\"changes\"=${{ github.event.head_commit.message }}]/[\"commit_hash\"=${{ env.COMMIT_HASH }}]/[\"version\"=MC1.20.2]"
+          body: "Need Help? Join our Discord and our #support channel for help! NOTE AS OF RIGHT NOW DEEPSLATE IS BETA THE DEEPSLATE TEAM DOES NOT RECCOMAND YOU USING DEEPSLATE ON A LARGE SERVER!"
           token: ${{ secrets.TOKEN }}
           files: build/libs/*.jar
       - name: Github Releases To Discord
