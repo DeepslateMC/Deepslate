@@ -17,7 +17,7 @@ index eaa2943b667967f93f28d9d794d702fdaeb670ec..0e780da8dc230b27eddb01d1fa8bf2d8
      private Raid.RaidStatus status;
      private int celebrationTicks;
      private Optional<BlockPos> waveSpawnPos;
-+    private boolean isBarDirty; // DivineMC - lithium: ai.raid
++    private boolean isBarDirty; // Deepslate - lithium: ai.raid
  
      public Raid(int id, ServerLevel world, BlockPos pos) {
          this.raidEvent = new ServerBossEvent(Raid.RAID_NAME_COMPONENT, BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
