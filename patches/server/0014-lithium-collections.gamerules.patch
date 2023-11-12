@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Sat, 11 Nov 2023 01:28:01 +0300
+Subject: [PATCH] lithium: collections.gamerules
+
+
+diff --git a/src/main/java/net/minecraft/world/level/GameRules.java b/src/main/java/net/minecraft/world/level/GameRules.java
+index 6639902efb85b4f49f26ba5f90556fb871ef8a0e..42dfcd2e9e794e6b48aec8c34618065d7a740c6c 100644
+--- a/src/main/java/net/minecraft/world/level/GameRules.java
++++ b/src/main/java/net/minecraft/world/level/GameRules.java
+@@ -27,6 +27,7 @@ import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
+ import net.minecraft.server.MinecraftServer;
+ import net.minecraft.server.level.ServerPlayer;
+ import org.slf4j.Logger;
++import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+ 
+ public class GameRules {
+ 
+@@ -137,7 +138,7 @@ public class GameRules {
+     }
+ 
+     private GameRules(Map<GameRules.Key<?>, GameRules.Value<?>> rules) {
+-        this.rules = rules;
++        this.rules = new Object2ObjectOpenHashMap<>(rules); // Deepslate - lithium: collections.gamerules
+ 
+         // Paper start
+         int arraySize = rules.keySet().stream().mapToInt(key -> key.gameRuleIndex).max().orElse(-1) + 1;
