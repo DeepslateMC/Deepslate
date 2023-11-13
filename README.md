@@ -18,4 +18,5 @@ Deepslate is a fork of [Purpur](https://www.github.com/PurpurMC/Purpur) which ad
 - No Spam Logs
 - Implements Memory Leak Fix
 - Disables "reload"
+- Add's Patches from [Mirai](https://github.com/Dreeam-qwq/Mirai)
 More soon
