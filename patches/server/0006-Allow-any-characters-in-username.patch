@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Sun, 12 Nov 2023 21:03:32 +0900
+Subject: [PATCH] Allow any characters in username
+
+Rubia
+Copyright (C) 2022  Irochi
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+diff --git a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index 01d5fa265fb2818465b5a71a2e2efeec751a7a05..2cb05725992ccb06b2bf91a2d578306cb8bf7105 100644
+--- a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -240,7 +240,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+     @Override
+     public void handleHello(ServerboundHelloPacket packet) {
+         Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet", new Object[0]);
+-        Validate.validState(ServerLoginPacketListenerImpl.isValidUsername(packet.name()), "Invalid characters in username", new Object[0]);
++        if (!org.deepslatemc.deepslate.DeepslateConfig.allowAnyUsername) Validate.validState(ServerLoginPacketListenerImpl.isValidUsername(packet.name()), "Invalid characters in username", new Object[0]); // Deepslate
+         // Paper start - validate usernames
+         if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.performUsernameValidation) {
+             if (!this.iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation && !validateUsername(packet.name())) {
+@@ -292,7 +292,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+     }
+ 
+     public static boolean isValidUsername(String name) {
+-        return name.chars().filter((i) -> {
++        return org.deepslatemc.deepslate.DeepslateConfig.allowAnyUsername || name.chars().filter((i) -> { // Deepslate
+             return i <= 32 || i >= 127;
+         }).findAny().isEmpty();
+     }
+diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java
+index 2ead21c1b1e74887bfb900c506f43cebf635ab5a..a7d8777bd26747b362eec2dbb847ca833901eec2 100644
+--- a/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
++++ b/src/main/java/org/shuvimc/shuvi/ShuviConfig.java
+@@ -154,4 +154,9 @@ public final class ShuviConfig {
+         sendUselessEntityPackets = getBoolean("settings.entity.general.send-useless-entity-packets", sendUselessEntityPackets);
+     }
+ 
++    public static boolean allowAnyUsername = false;
++    private static void playerSettings() {
++        allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
++    }
++
+ }
