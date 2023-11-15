@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
-index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..2ba5c8f76a5e72ee4d9f04c27b0e5c9c47faab3b 100644
+index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..9b9e8cdc66a15fe9ce6e42d4b92c4091ac9f00d0 100644
 --- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
 +++ b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
 @@ -36,14 +36,22 @@ class PaperEventManager {

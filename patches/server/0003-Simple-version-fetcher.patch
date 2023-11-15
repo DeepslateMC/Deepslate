@@ -5,7 +5,7 @@ Subject: [PATCH] Simple version fetcher
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index 1e81801e5701b08feedd840c1e1663ae26507c16..661db7845f65b20d63342c5174554d02062fd96b 100644
+index 1e81801e5701b08feedd840c1e1663ae26507c16..775273010f531a698bbc0cfef0a393f63b1912c6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 @@ -485,7 +485,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
@@ -19,7 +19,7 @@ index 1e81801e5701b08feedd840c1e1663ae26507c16..661db7845f65b20d63342c5174554d02
      @Override
 diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java b/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..7dd13fdd42832120556dabd3b8086b30ae509d9b
+index 0000000000000000000000000000000000000000..087220fb36dd83424072c548177826238ceaeecd
 --- /dev/null
 +++ b/src/main/java/org/deepslatemc/deepslate/DeepslateVersionFetcher.java
 @@ -0,0 +1,18 @@

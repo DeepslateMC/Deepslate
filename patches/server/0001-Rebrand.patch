@@ -5,7 +5,7 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index e372110a189857056e4fae3cd1d996ce8cb69493..73b65764d50353f5204b244aa27bf31dfb0b2b4f 100644
+index 0eeca0c0dfbb62b7551cda95576932d3f14e6de2..7aba6239e272b2cee2bb4f50894739a76525f569 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -13,12 +13,10 @@ configurations.named(log4jPlugins.compileClasspathConfigurationName) {
@@ -32,7 +32,7 @@ index e372110a189857056e4fae3cd1d996ce8cb69493..73b65764d50353f5204b244aa27bf31d
              "Specification-Title" to "Bukkit",
              "Specification-Version" to project.version,
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index 462a6eed350fd660ddaf25d567bb6e97b77d0b2b..9e3e1ddb6ff728533e1d0d11ac62de0ca273cc9e 100644
+index 462a6eed350fd660ddaf25d567bb6e97b77d0b2b..7ff6915dd1d646ea9af42e9d5ee8775bed147f48 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -33,8 +33,8 @@ public class PaperVersionFetcher implements VersionFetcher {
@@ -66,10 +66,10 @@ index 462a6eed350fd660ddaf25d567bb6e97b77d0b2b..9e3e1ddb6ff728533e1d0d11ac62de0c
          switch (distance) {
              case -1:
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 3c83fc78af6ce549a821c0e030d3dea1790dca47..d8351fe0638c957aea3afc5d490b86759d6f78d2 100644
+index 79f00c72d28426095a3f3742d77f2369164b2a9c..d36b51c02fd7acb86e8fbbea86a228185a678f5a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -267,7 +267,7 @@ import javax.annotation.Nullable; // Paper
+@@ -269,7 +269,7 @@ import javax.annotation.Nullable; // Paper
  import javax.annotation.Nonnull; // Paper
  
  public final class CraftServer implements Server {
@@ -79,7 +79,7 @@ index 3c83fc78af6ce549a821c0e030d3dea1790dca47..d8351fe0638c957aea3afc5d490b8675
      private final String bukkitVersion = Versioning.getBukkitVersion();
      private final Logger logger = Logger.getLogger("Minecraft");
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..5e8569c0661d6cb38e8dafe47b812c7ba834dc0e 100644
+index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..bd70b99c145138ea84f6447bc2e0c8873b9d4cb3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
@@ -92,7 +92,7 @@ index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..5e8569c0661d6cb38e8dafe47b812c7b
  
          if (stream != null) {
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-index 3633574e112f217b412217dd243a631dc4e9c40c..d97db83d079d7a2354d796c186acb23de3476682 100644
+index 3633574e112f217b412217dd243a631dc4e9c40c..f8868331104cae535042314dfd99e5a0f4ef2c5c 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 @@ -231,7 +231,7 @@ public class PurpurConfig {

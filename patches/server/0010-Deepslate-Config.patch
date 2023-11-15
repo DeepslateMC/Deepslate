@@ -5,9 +5,128 @@ Subject: [PATCH] Deepslate Config
 
 This is modified config file by PurpurMC
 
+diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+index 38454025445c4a0bdc16adc35dd3883064333243..2738e381a731606524a7e21c14cac22305f5a41f 100644
+--- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -235,6 +235,16 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
+         gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
+ 
++        // Deepslate start
++        try {
++            org.deepslatemc.deepslate.configuration.DeepslateConfig.init((java.io.File) options.valueOf("deepslate-settings"));
++        } catch (Exception e) {
++            DedicatedServer.LOGGER.error("Unable to load server configuration", e);
++            return false;
++        }
++        org.deepslatemc.deepslate.configuration.DeepslateConfig.registerCommands();
++        // Deepslate end
++
+         this.setPvpAllowed(dedicatedserverproperties.pvp);
+         this.setFlightAllowed(dedicatedserverproperties.allowFlight);
+         this.setMotd(dedicatedserverproperties.motd);
+diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
+index 25540a7f5631acd856726cdb44bace9be7dab401..053112fe37d2aa5190158b5caef40c1ff81d6a52 100644
+--- a/src/main/java/net/minecraft/world/level/Level.java
++++ b/src/main/java/net/minecraft/world/level/Level.java
+@@ -15,6 +15,8 @@ import java.util.function.Consumer;
+ import java.util.function.Predicate;
+ import java.util.function.Supplier;
+ import javax.annotation.Nullable;
++
++import org.deepslatemc.deepslate.configuration.DeepslateWorldConfig;
+ import net.minecraft.CrashReport;
+ import net.minecraft.CrashReportCategory;
+ import net.minecraft.ReportedException;
+@@ -177,6 +179,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+ 
+     public final com.destroystokyo.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
+     public final org.purpurmc.purpur.PurpurWorldConfig purpurConfig; // Purpur
++    public final org.deepslatemc.deepslate.configuration.DeepslateWorldConfig deepslateConfig; // Deepslate
+     public final co.aikar.timings.WorldTimingsHandler timings; // Paper
+     public static BlockPos lastPhysicsProblem; // Spigot
+     private org.spigotmc.TickLimiter entityLimiter;
+@@ -260,6 +263,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+         this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
+         this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
+         this.purpurConfig = new org.purpurmc.purpur.PurpurWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Purpur
++        this.deepslateConfig = new DeepslateWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Deepslate
+         this.playerBreedingCooldowns = this.getNewBreedingCooldownCache(); // Purpur
+         this.generator = gen;
+         this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index d36b51c02fd7acb86e8fbbea86a228185a678f5a..13c1b1aa5c3e690da825fe976a0b80d4448a1944 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -15,6 +15,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
+ import com.mojang.datafixers.util.Pair;
+ import com.mojang.serialization.DynamicOps;
+ import com.mojang.serialization.Lifecycle;
++import org.deepslatemc.deepslate.configuration.DeepslateConfig;
+ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+ import java.awt.image.BufferedImage;
+ import java.io.ByteArrayOutputStream;
+@@ -1056,6 +1057,7 @@ public final class CraftServer implements Server {
+         org.spigotmc.SpigotConfig.init((File) this.console.options.valueOf("spigot-settings")); // Spigot
+         this.console.paperConfigurations.reloadConfigs(this.console);
+         org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur
++        org.deepslatemc.deepslate.configuration.DeepslateConfig.init((File) console.options.valueOf("deepslate-settings")); // Deepslate
+         for (ServerLevel world : this.console.getAllLevels()) {
+             // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
+             world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters, config.spawnAnimals); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
+@@ -1072,6 +1074,7 @@ public final class CraftServer implements Server {
+             }
+             world.spigotConfig.init(); // Spigot
+             world.purpurConfig.init(); // Purpur
++            world.deepslateConfig.init(); // Deepslate
+         }
+ 
+         Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
+@@ -1088,6 +1091,7 @@ public final class CraftServer implements Server {
+         org.spigotmc.SpigotConfig.registerCommands(); // Spigot
+         io.papermc.paper.command.PaperCommands.registerCommands(this.console); // Paper
+         org.purpurmc.purpur.PurpurConfig.registerCommands(); // Purpur
++        org.deepslatemc.deepslate.configuration.DeepslateConfig.registerCommands(); // Deepslate
+         this.overrideAllCommandBlockCommands = this.commandsConfiguration.getStringList("command-block-overrides").contains("*");
+         this.ignoreVanillaPermissions = this.commandsConfiguration.getBoolean("ignore-vanilla-permissions");
+ 
+@@ -3062,6 +3066,13 @@ public final class CraftServer implements Server {
+         }
+         // Purpur end
+ 
++        // Deepslate start
++        @Override
++        public YamlConfiguration getDeepslateConfig() {
++            return DeepslateConfig.config;
++        }
++        // Deepslate end
++
+         @Override
+         public void restart() {
+             org.spigotmc.RestartCommand.restart();
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index f4bb177984f0c0223dbadf4fc7562040e4f74d6d..db83a892f7169ddf8d0f9dc021d35142b6c7c872 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -187,6 +187,14 @@ public class Main {
+                         .describedAs("Yml file");
+                 // Purpur end
+ 
++                // Deepslate start
++                acceptsAll(asList("deepslate", "deepslate-settings"), "File for deepslate settings")
++                        .withRequiredArg()
++                        .ofType(File.class)
++                        .defaultsTo(new File("deepslate.yml"))
++                        .describedAs("Yml file");
++                // Deepslate end
++
+                 // Paper start
+                 acceptsAll(asList("server-name"), "Name of the server")
+                         .withRequiredArg()
 diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateCommand.java b/src/main/java/org/deepslatemc/deepslate/DeepslateCommand.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..6ab4a0ae2a0f63e4dfdb36a561ccda2ad183caab
+index 0000000000000000000000000000000000000000..1efcf89e3df4f7d9e2ead1e54c41f0be96a3b0ea
 --- /dev/null
 +++ b/src/main/java/org/deepslatemc/deepslate/DeepslateCommand.java
 @@ -0,0 +1,66 @@
@@ -79,7 +198,7 @@ index 0000000000000000000000000000000000000000..6ab4a0ae2a0f63e4dfdb36a561ccda2a
 +}
 diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9e802fbe8e5f1a3c24cb6bc9254c72a2a0c3fde1
+index 0000000000000000000000000000000000000000..3b09fb4588332840daae00cfa76a4584bec35887
 --- /dev/null
 +++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
 @@ -0,0 +1,155 @@
@@ -241,7 +360,7 @@ index 0000000000000000000000000000000000000000..9e802fbe8e5f1a3c24cb6bc9254c72a2
 \ No newline at end of file
 diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..5d16d2250bae9c982a0af9ad2580a63532b140f7
+index 0000000000000000000000000000000000000000..66f8714ec2fe1b0cd55a7939adac6ebdc108dd93
 --- /dev/null
 +++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
 @@ -0,0 +1,80 @@
@@ -326,122 +445,3 @@ index 0000000000000000000000000000000000000000..5d16d2250bae9c982a0af9ad2580a635
 +    }
 +}
 \ No newline at end of file
-diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index a51306bb36d403ab627cd8b2fc8d8f7a3e6ca918..547c60bdb71ef7641273348b836f2feeab06bd9c 100644
---- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-+++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -235,6 +235,16 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
-         gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
-         gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
- 
-+        // Deepslate start
-+        try {
-+            org.deepslatemc.deepslate.configuration.DeepslateConfig.init((java.io.File) options.valueOf("deepslate-settings"));
-+        } catch (Exception e) {
-+            DedicatedServer.LOGGER.error("Unable to load server configuration", e);
-+            return false;
-+        }
-+        org.deepslatemc.deepslate.configuration.DeepslateConfig.registerCommands();
-+        // Deepslate end
-+
-         this.setPvpAllowed(dedicatedserverproperties.pvp);
-         this.setFlightAllowed(dedicatedserverproperties.allowFlight);
-         this.setMotd(dedicatedserverproperties.motd);
-diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index 25540a7f5631acd856726cdb44bace9be7dab401..4ed2a063f21ae4bb840e5ec1f84e04221f753ca0 100644
---- a/src/main/java/net/minecraft/world/level/Level.java
-+++ b/src/main/java/net/minecraft/world/level/Level.java
-@@ -15,6 +15,8 @@ import java.util.function.Consumer;
- import java.util.function.Predicate;
- import java.util.function.Supplier;
- import javax.annotation.Nullable;
-+
-+import org.deepslatemc.deepslate.configuration.DeepslateWorldConfig;
- import net.minecraft.CrashReport;
- import net.minecraft.CrashReportCategory;
- import net.minecraft.ReportedException;
-@@ -177,6 +179,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
- 
-     public final com.destroystokyo.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
-     public final org.purpurmc.purpur.PurpurWorldConfig purpurConfig; // Purpur
-+    public final org.deepslatemc.deepslate.configuration.DeepslateWorldConfig deepslateConfig; // Deepslate
-     public final co.aikar.timings.WorldTimingsHandler timings; // Paper
-     public static BlockPos lastPhysicsProblem; // Spigot
-     private org.spigotmc.TickLimiter entityLimiter;
-@@ -260,6 +263,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
-         this.spigotConfig = new org.spigotmc.SpigotWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName()); // Spigot
-         this.paperConfig = paperWorldConfigCreator.apply(this.spigotConfig); // Paper
-         this.purpurConfig = new org.purpurmc.purpur.PurpurWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Purpur
-+        this.deepslateConfig = new DeepslateWorldConfig(((net.minecraft.world.level.storage.PrimaryLevelData) worlddatamutable).getLevelName(), env); // Deepslate
-         this.playerBreedingCooldowns = this.getNewBreedingCooldownCache(); // Purpur
-         this.generator = gen;
-         this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
-diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 0ac0184c4de16f8a6f2b83dd344e0607a5c6d8f5..b1adcc3a1fc14bd0daa9059d124e533a3b62ef41 100644
---- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-+++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -15,6 +15,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
- import com.mojang.datafixers.util.Pair;
- import com.mojang.serialization.DynamicOps;
- import com.mojang.serialization.Lifecycle;
-+import org.deepslatemc.deepslate.configuration.DeepslateConfig;
- import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
- import java.awt.image.BufferedImage;
- import java.io.ByteArrayOutputStream;
-@@ -1054,6 +1055,7 @@ public final class CraftServer implements Server {
-         org.spigotmc.SpigotConfig.init((File) this.console.options.valueOf("spigot-settings")); // Spigot
-         this.console.paperConfigurations.reloadConfigs(this.console);
-         org.purpurmc.purpur.PurpurConfig.init((File) console.options.valueOf("purpur-settings")); // Purpur
-+        org.deepslatemc.deepslate.configuration.DeepslateConfig.init((File) console.options.valueOf("deepslate-settings")); // Deepslate
-         for (ServerLevel world : this.console.getAllLevels()) {
-             // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
-             world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters, config.spawnAnimals); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
-@@ -1070,6 +1072,7 @@ public final class CraftServer implements Server {
-             }
-             world.spigotConfig.init(); // Spigot
-             world.purpurConfig.init(); // Purpur
-+            world.deepslateConfig.init(); // Deepslate
-         }
- 
-         Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
-@@ -1086,6 +1089,7 @@ public final class CraftServer implements Server {
-         org.spigotmc.SpigotConfig.registerCommands(); // Spigot
-         io.papermc.paper.command.PaperCommands.registerCommands(this.console); // Paper
-         org.purpurmc.purpur.PurpurConfig.registerCommands(); // Purpur
-+        org.deepslatemc.deepslate.configuration.DeepslateConfig.registerCommands(); // Deepslate
-         this.overrideAllCommandBlockCommands = this.commandsConfiguration.getStringList("command-block-overrides").contains("*");
-         this.ignoreVanillaPermissions = this.commandsConfiguration.getBoolean("ignore-vanilla-permissions");
- 
-@@ -2999,6 +3003,13 @@ public final class CraftServer implements Server {
-         }
-         // Purpur end
- 
-+        // Deepslate start
-+        @Override
-+        public YamlConfiguration getDeepslateConfig() {
-+            return DeepslateConfig.config;
-+        }
-+        // Deepslate end
-+
-         @Override
-         public void restart() {
-             org.spigotmc.RestartCommand.restart();
-diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index f4bb177984f0c0223dbadf4fc7562040e4f74d6d..eef4a7ec24fd1be69e737c74f1f4267277fad9e1 100644
---- a/src/main/java/org/bukkit/craftbukkit/Main.java
-+++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -187,6 +187,14 @@ public class Main {
-                         .describedAs("Yml file");
-                 // Purpur end
- 
-+                // Deepslate start
-+                acceptsAll(asList("deepslate", "deepslate-settings"), "File for deepslate settings")
-+                        .withRequiredArg()
-+                        .ofType(File.class)
-+                        .defaultsTo(new File("deepslate.yml"))
-+                        .describedAs("Yml file");
-+                // Deepslate end
-+
-                 // Paper start
-                 acceptsAll(asList("server-name"), "Name of the server")
-                         .withRequiredArg()

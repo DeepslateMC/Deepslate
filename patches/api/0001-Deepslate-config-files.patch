@@ -5,10 +5,10 @@ Subject: [PATCH] Deepslate config files
 
 
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index aaef58468a3c31f35e5067ed4263e9dd3fbddddd..414fc9220a181b82abdd0d2070dd6b689bfa99a8 100644
+index 7eae8683c0d540ba049dddaed8737e051d6f60db..193aa8c3e206e05e3dd1358ad57281af4031aa4d 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2133,6 +2133,13 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2202,6 +2202,13 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
          }
          // Purpur end
  
