@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: DeepslateMC Discord
+    url: https://discord.gg/drEbTSuJxH
+    about: If you are having issues, come ask us on our Discord server!
+  - name: Ask Community
+    url: https://github.com/DeepslateMC/Deepslate/discussions
+    about: If you have a question, ask the community on the discussion page!
+  - name: Deepslate Docs (Coming Soon)
+    url: https://www.github.com/DeepslateMC/Deepslate
+    about: You can find some Q&A on the Deepslate docs
