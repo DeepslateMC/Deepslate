@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancake <pancakseyt@gmail.com>
+Date: Thu, 16 Nov 2023 23:47:42 +0900
+Subject: [PATCH] XaeroMap protocol
+
+
+diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
+index da7bf0735997633dc13e4901fc5941bede7190b5..4de93de968a27ff8ac4aa7a4fe5d254644205229 100644
+--- a/src/main/java/net/minecraft/server/players/PlayerList.java
++++ b/src/main/java/net/minecraft/server/players/PlayerList.java
+@@ -1292,6 +1292,7 @@ public abstract class PlayerList {
+         player.connection.send(new ClientboundInitializeBorderPacket(worldborder));
+         player.connection.send(new ClientboundSetTimePacket(world.getGameTime(), world.getDayTime(), world.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)));
+         player.connection.send(new ClientboundSetDefaultSpawnPositionPacket(world.getSharedSpawnPos(), world.getSharedSpawnAngle()));
++        org.deepslatemc.deepslate.integrated.protocol.XaeroMapProtocol.onSendLevelInfo(player); // Deepslate - support XaeroMap
+         if (world.isRaining()) {
+             // CraftBukkit start - handle player weather
+             // entityplayer.connection.send(new PacketPlayOutGameStateChange(PacketPlayOutGameStateChange.START_RAINING, 0.0F));
+diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java
+index d55480f87277ab765ea76420c6eb57a80ee72b59..b28af6a6a66a9a5343f1a286b835230d31e08ce9 100644
+--- a/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/DeepslateConfig.java
+@@ -19,6 +19,7 @@ import java.lang.reflect.Modifier;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Random;
+ import java.util.logging.Level;
+ 
+ @SuppressWarnings("unused")
+@@ -163,9 +164,17 @@ public final class DeepslateConfig {
+ 
+     public static boolean useAppleSkinProtocol = false;
+     public static boolean useJadeProtocol = false;
++    public static boolean useXaeroMapProtocol = false;
++    public static int theXaeroMapID;
+     private static void miscSettings() {
+         useAppleSkinProtocol = getBoolean("settings.misc.protocol.support-apple-skin", useAppleSkinProtocol);
+         useJadeProtocol = getBoolean("settings.misc.protocol.support-jade", useJadeProtocol);
++        useXaeroMapProtocol = getBoolean("settings.misc.protocol.support-xaero-map", useXaeroMapProtocol);
++        theXaeroMapID = getInt("settings.misc.xaero-map-id", theXaeroMapID);
++        if (useXaeroMapProtocol && theXaeroMapID == 0) {
++            theXaeroMapID = new Random().nextInt();
++            set("settings.misc.xaero-map-id", theXaeroMapID);
++        }
+     }
+ 
+     /** @see <a href="https://bugs.mojang.com/browse/MC-26304">MC-26304</a> */
+diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateWorldConfig.java b/src/main/java/org/deepslatemc/deepslate/DeepslateWorldConfig.java
+index 63b2c577286d9cb062392fd7db1addea987bdc0c..d131eca8b3045a175ef1d9f4faac49fce5bc34fc 100644
+--- a/src/main/java/org/deepslatemc/deepslate/DeepslateWorldConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/DeepslateWorldConfig.java
+@@ -82,4 +82,9 @@ public final class DeepslateWorldConfig {
+         farmlandGetsMoistFromWaterCauldron = getBoolean("blocks.farmland.gets-moist-from-water-cauldron", farmlandGetsMoistFromWaterCauldron);
+     }
+ 
++    public boolean useXaeroMapProtocol = false;
++    private void miscSettings() {
++        useXaeroMapProtocol = getBoolean("settings.misc.protocol.support-xaero-map", useXaeroMapProtocol);
++    }
++
+ }
+diff --git a/src/main/java/org/deepslatemc/deepslate/integrated/protocol/XaeroMapProtocol.java b/src/main/java/org/deepslatemc/deepslate/integrated/protocol/XaeroMapProtocol.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..dbfda2f790f584f97071cb02739c91a859629f24
+--- /dev/null
++++ b/src/main/java/org/deepslatemc/deepslate/integrated/protocol/XaeroMapProtocol.java
+@@ -0,0 +1,30 @@
++package org.deepslatemc.deepslate.integrated.protocol;
++
++import io.netty.buffer.Unpooled;
++import net.minecraft.network.FriendlyByteBuf;
++import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.server.level.ServerPlayer;
++import org.jetbrains.annotations.NotNull;
++import org.deepslatemc.deepslate.DeepslateConfig;
++
++public final class XaeroMapProtocol {
++
++    public static final String PROTOCOL_ID_MINI = "xaerominimap";
++    public static final String PROTOCOL_ID_WORLD = "xaeroworldmap";
++
++    private static final ResourceLocation MINIMAP_KEY = new ResourceLocation(PROTOCOL_ID_MINI, "main");
++    private static final ResourceLocation WORLDMAP_KEY = new ResourceLocation(PROTOCOL_ID_WORLD, "main");
++
++    public static void onSendLevelInfo(final @NotNull ServerPlayer player) {
++        if (DeepslateConfig.useXaeroMapProtocol || player.serverLevel().deepslateConfig.useXaeroMapProtocol) {
++            final FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
++            buf.writeByte(0);
++            buf.writeInt(DeepslateConfig.theXaeroMapID);
++
++            player.connection.send(new ClientboundCustomPayloadPacket(MINIMAP_KEY, buf));
++            player.connection.send(new ClientboundCustomPayloadPacket(WORLDMAP_KEY, buf));
++        }
++    }
++
++}
