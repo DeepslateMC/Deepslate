@@ -2,6 +2,12 @@
 ## DeepslateMC
 Deepslate is a fork of [Purpur](https://www.github.com/PurpurMC/Purpur) which add utility and optimizations but still keeping your stable to your server!
 
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/DeepslateMC/Deepslate/build.yml?logo=GoogleAnalytics&logoColor=ffffff style=for-the-badge)](https://github.com/DeepslateMC/Deepslate/actions/workflows/build.yml)
+[![Upstream](https://img.shields.io/github/actions/workflow/status/DeepslateMC/Deepslate/upstream.yml?logo=GoogleAnalytics&logoColor=ffffff&style=for-the-badge)](https://github.com/DeepslateMC/Deepslate/actions/workflows/upstream.yml)
+[![Discord](https://img.shields.io/discord/1171315977653334076?color=5865F2&label=discord&style=for-the-badge)](https://discord.gg/drEbTSuJxH)
+[![Download](https://img.shields.io/github/downloads/DeepslateMC/DeepslateMC/total?&style=for-the-badge&logoColor=ffffff)](https://github.com/DeepslateMC/Deepslate/releases/latest)
+</div>
+
 ### WE ARE IN HEAVY DEVELOPMENT 
 
 ## bStats
