@@ -32,7 +32,6 @@ index bd41b980749c5cb396ce9334877124c122387cde..6332ac1dc8d89f74bdab1015ce5b0d51
 @@ -36,6 +36,7 @@ public class GlobalConfiguration extends ConfigurationPart {
          public class ServerSecurity extends ConfigurationPart {
  
-+
 +    public static boolean allowAnyUsername = false;
 +    private static void allowAnyUsername() {
 +        allowAnyUsername = getBoolean("settings.server.allow-any-username", allowAnyUsername);
