@@ -4,23 +4,8 @@ Date: Mon, 3 Apr 2023 23:52:44 +0300
 Subject: [PATCH] Allow any username
 
 
-diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-index 9e802fbe8e5f1a3c24cb6bc9254c72a2a0c3fde1..426ae4086adc0180e3f3ba06cf6c005476ca891e 100644
---- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-+++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-@@ -152,4 +152,9 @@ public class DeepslateConfig {
-         }
-         return builder.build();
-     }
-+
-+    public static boolean allowAnyUsername = false;
-+    private static void allowAnyUsername() {
-+        allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
-+    }
- }
-\ No newline at end of file
 diff --git a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index 3dcccca8ede9b203c24ba29b2020a583297b895c..272670750afe2d07e51f2f7589c5718a2c155ed4 100644
+index 3dcccca8ede9b203c24ba29b2020a583297b895c..aadc6e8728a73a91ecf933f0cc815328ee330fbe 100644
 --- a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 +++ b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 @@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
@@ -41,3 +26,18 @@ index 3dcccca8ede9b203c24ba29b2020a583297b895c..272670750afe2d07e51f2f7589c5718a
          // Paper start - validate usernames
          if (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && io.papermc.paper.configuration.GlobalConfiguration.get().unsupportedSettings.performUsernameValidation) {
              if (!this.iKnowThisMayNotBeTheBestIdeaButPleaseDisableUsernameValidation && !validateUsername(packet.name())) {
+diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
+index 3b09fb4588332840daae00cfa76a4584bec35887..04b390d62875f6a66e2f18ddf2ef5e886a746057 100644
+--- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
+@@ -152,4 +152,9 @@ public class DeepslateConfig {
+         }
+         return builder.build();
+     }
++
++    public static boolean allowAnyUsername = false;
++    private static void allowAnyUsername() {
++        allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
++    }
+ }
+\ No newline at end of file

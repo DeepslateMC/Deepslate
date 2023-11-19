@@ -5,9 +5,8 @@ Subject: [PATCH] More Memory/RAM Optimizations
 
 Patch from canvas
 
-
 diff --git a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
-index e46a097dc134672720bc753ec0da0a9102737d2c..8c8a87f6869c200d38f7c701d5da71eb43892726 100644
+index e46a097dc134672720bc753ec0da0a9102737d2c..fc3855b8eca751fc51dd63cd4c057cba84da6d19 100644
 --- a/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
 +++ b/src/main/java/net/minecraft/world/level/block/state/BlockBehaviour.java
 @@ -789,6 +789,12 @@ public abstract class BlockBehaviour implements FeatureElement {
@@ -108,7 +107,7 @@ index e46a097dc134672720bc753ec0da0a9102737d2c..8c8a87f6869c200d38f7c701d5da71eb
  
              Cache(BlockState state) {
 diff --git a/src/main/java/net/minecraft/world/phys/shapes/ArrayVoxelShape.java b/src/main/java/net/minecraft/world/phys/shapes/ArrayVoxelShape.java
-index a232b9396a41c11579a4d691b05717b16473513e..064ef8b5cc5bf1767ad54fe41d007f6db12cc448 100644
+index a232b9396a41c11579a4d691b05717b16473513e..35ab01d9548ea568f316d929cff362eb6c646a57 100644
 --- a/src/main/java/net/minecraft/world/phys/shapes/ArrayVoxelShape.java
 +++ b/src/main/java/net/minecraft/world/phys/shapes/ArrayVoxelShape.java
 @@ -7,9 +7,11 @@ import net.minecraft.Util;
@@ -127,7 +126,7 @@ index a232b9396a41c11579a4d691b05717b16473513e..064ef8b5cc5bf1767ad54fe41d007f6d
      protected ArrayVoxelShape(DiscreteVoxelShape shape, double[] xPoints, double[] yPoints, double[] zPoints) {
          this(shape, (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(xPoints, shape.getXSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(yPoints, shape.getYSize() + 1)), (DoubleList)DoubleArrayList.wrap(Arrays.copyOf(zPoints, shape.getZSize() + 1)));
 diff --git a/src/main/java/net/minecraft/world/phys/shapes/SliceShape.java b/src/main/java/net/minecraft/world/phys/shapes/SliceShape.java
-index d9256710e815a5cb55409a80d59df2029b98c0d7..f9ca041661c693f91fdd7b64b820f8182da17d11 100644
+index d9256710e815a5cb55409a80d59df2029b98c0d7..65e8c67f2b96812eec81d9606c1936180d580451 100644
 --- a/src/main/java/net/minecraft/world/phys/shapes/SliceShape.java
 +++ b/src/main/java/net/minecraft/world/phys/shapes/SliceShape.java
 @@ -5,6 +5,11 @@ import net.minecraft.core.Direction;
@@ -143,7 +142,7 @@ index d9256710e815a5cb55409a80d59df2029b98c0d7..f9ca041661c693f91fdd7b64b820f818
      private static final DoubleList SLICE_COORDS = new CubePointRange(1);
  
 diff --git a/src/main/java/net/minecraft/world/phys/shapes/VoxelShape.java b/src/main/java/net/minecraft/world/phys/shapes/VoxelShape.java
-index eec2e561eb097be2de18a4f3a23428e3ebe8cc51..92cccebe244fd0afe268fe1d17deeedee4329b4d 100644
+index 6bd6385ad82481a099f3556ed2dbd3744888fc34..ae27ea715cecf5ad2913ae63526af84c7d47c3cf 100644
 --- a/src/main/java/net/minecraft/world/phys/shapes/VoxelShape.java
 +++ b/src/main/java/net/minecraft/world/phys/shapes/VoxelShape.java
 @@ -16,9 +16,9 @@ import net.minecraft.world.phys.BlockHitResult;
