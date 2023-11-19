@@ -35,7 +35,7 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Canvas version
+      label: Deepslate version
       description: |
         Run `/version` on your server and **paste** the full, unmodified output here.
         "latest" is *not* a version; we require the output of `/version` so we can adequately track down the issue.
