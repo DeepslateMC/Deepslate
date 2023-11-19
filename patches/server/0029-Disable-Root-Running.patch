@@ -16,8 +16,8 @@ index a4690357bec1e88d5c3c1a0112c64f0f32fa25e3..531b069e7d7147e273a22a9f6dd81c0c
 +            // Deepslate start - Disable Running Root
 +            if (org.deepslatemc.deepslate.configuration.GlobalConfiguration.get().serverOptions.serverSecurity.disableRootRunning) {
 +                DedicatedServer.LOGGER.warn("****************************");
-+                DedicatedServer.LOGGER.warn("YOU ARE RUNNING THIS SERVER AS AN ADMINISTRATIVE OR ROOT USER. THIS FEATURE IS DISABLED IN \"deepslate.yml\".");
-+                DedicatedServer.LOGGER.warn("THE DEEPSLATE SERVER WILL NOW BEGIN TO SHUTDOWN.");
++                DedicatedServer.LOGGER.warn("YOU ARE RUNNING THIS SERVER AS AN ADMINISTRATIVE OR ROOT USER. THIS FEATURE IS DISABLED IN \"deepslate-global.yml\".");
++                DedicatedServer.LOGGER.warn("THE SERVER WILL NOW BEGIN TO SHUTDOWN.");
 +                DedicatedServer.LOGGER.warn("****************************");
 +                return false;
 +            }
@@ -32,9 +32,7 @@ index bd41b980749c5cb396ce9334877124c122387cde..6332ac1dc8d89f74bdab1015ce5b0d51
 @@ -36,6 +36,7 @@ public class GlobalConfiguration extends ConfigurationPart {
          public class ServerSecurity extends ConfigurationPart {
  
-+    public static boolean allowAnyUsername = false;
-+    private static void allowAnyUsername() {
-+        allowAnyUsername = getBoolean("settings.server.allow-any-username", allowAnyUsername);
-+    }
++            public boolean disableRootRunning = true;
+ 
          }
      }
