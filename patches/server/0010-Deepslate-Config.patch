@@ -232,7 +232,7 @@ index 0000000000000000000000000000000000000000..3b09fb4588332840daae00cfa76a4584
 +            + "join us in our Discord server.\n"
 +            + "\n"
 +            + "Discord: https://discord.gg/mQPDhDBnyf \n"
-+            + "Docs: COMING SOON \n"
++            + "Docs: https://deepslatemc.gitbook.io/docs \n"
 +            + "New builds: https://github.com/DeepslateMC/Deepslate/releases/latest";
 +    private static File CONFIG_FILE;
 +    public static YamlConfiguration config;

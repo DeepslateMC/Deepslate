@@ -74,7 +74,7 @@ index 3ec32b46264cfff857b50129b5e0fa5584943ec6..9cf8ed9c4c42f9469bd06b2eb43b5162
 +        // Deepslate start - Disable reload command by default
 +        Command.broadcastCommandMessage(sender, net.kyori.adventure.text.Component.text("Reloading disabled by default in Deepslate!", NamedTextColor.RED));
 +        Command.broadcastCommandMessage(sender, net.kyori.adventure.text.Component.text("This is a permanent change!", NamedTextColor.RED));
-+        Command.broadcastCommandMessage(sender, net.kyori.adventure.text.Component.text("Read here why it is unsafe: https://madelinemiller.dev/blog/problem-with-reload", NamedTextColor.GREEN));
++        Command.broadcastCommandMessage(sender, net.kyori.adventure.text.Component.text("Read here why it is unsafe: https://deepslatemc.gitbook.io/docs/server-blogs/disabling-reload", NamedTextColor.GREEN));
          return true;
 +        // Deepslate end
      }
