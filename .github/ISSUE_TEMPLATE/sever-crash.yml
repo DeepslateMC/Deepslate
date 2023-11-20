@@ -61,7 +61,7 @@ body:
           required: true
         - label: I have searched for and ensured there isn't already an open issue regarding this.
           required: true
-        - label: I ticked all the boxes without actually reading them
+        - label: I ticked all the boxes without actually reading them Hehe
           required: false
         - label: My version of Minecraft is supported by Deepslate.
           required: true
