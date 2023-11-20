@@ -1256,11 +1256,36 @@ index 0000000000000000000000000000000000000000..6877466f27fe8a22e2a68cf954dfaf31
 +        return false;
 +    }
 +}
+diff --git a/src/main/java/net/minecraft/resources/ResourceLocation.java b/src/main/java/net/minecraft/resources/ResourceLocation.java
+index 6e5d13e63c97cb95b93af1d997dc0eb53f966566..231448a1a49f1c4034ce09e06dcbdabe103bd8dd 100644
+--- a/src/main/java/net/minecraft/resources/ResourceLocation.java
++++ b/src/main/java/net/minecraft/resources/ResourceLocation.java
+@@ -18,6 +18,7 @@ import net.minecraft.ResourceLocationException;
+ import net.minecraft.network.chat.TranslatableComponent;
+ import net.minecraft.util.GsonHelper;
+ import org.apache.commons.lang3.StringUtils;
++import me.jellysquid.mods.hydrogen.common.dedup.IdentifierCaches; // JettPack
+ 
+ public class ResourceLocation implements Comparable<ResourceLocation> {
+     public static final Codec<ResourceLocation> CODEC = Codec.STRING.comapFlatMap(ResourceLocation::read, ResourceLocation::toString).stable();
+@@ -29,8 +30,10 @@ public class ResourceLocation implements Comparable<ResourceLocation> {
+     protected final String path;
+ 
+     protected ResourceLocation(String[] id) {
+-        this.namespace = StringUtils.isEmpty(id[0]) ? "minecraft" : id[0];
+-        this.path = id[1];
++        // JettPack start - port Hydrogen
++        this.namespace = IdentifierCaches.NAMESPACES.deduplicate(StringUtils.isEmpty(id[0]) ? "minecraft" : id[0]);
++        this.path = IdentifierCaches.PATH.deduplicate(id[1]);
++        // JettPack end
+         if (!isValidNamespace(this.namespace)) {
+             throw new ResourceLocationException("Non [a-z0-9_.-] character in namespace of location: " + org.apache.commons.lang3.StringUtils.normalizeSpace(this.namespace) + ":" + org.apache.commons.lang3.StringUtils.normalizeSpace(this.path)); // Paper
+         } else if (!isValidPath(this.path)) {
 diff --git a/src/main/java/net/minecraft/server/Main.java b/src/main/java/net/minecraft/server/Main.java
-index 71244e6d7e6cc4b848c7fa45f248651d797382ce..380b1c3f296de1af9c3cf1a3706fdd44b100edc2 100644
+index 2f5c021b6849acb81064d55418707921424b649b..8cf835307c36fb048d62af9f417daeeeb71a0cff 100644
 --- a/src/main/java/net/minecraft/server/Main.java
 +++ b/src/main/java/net/minecraft/server/Main.java
-@@ -95,6 +95,7 @@ public class Main {
+@@ -64,6 +64,7 @@ public class Main {
  
      @DontObfuscate
      public static void main(final OptionSet optionset) { // CraftBukkit - replaces main(String[] astring)
@@ -1269,10 +1294,10 @@ index 71244e6d7e6cc4b848c7fa45f248651d797382ce..380b1c3f296de1af9c3cf1a3706fdd44
          /* CraftBukkit start - Replace everything
          OptionParser optionparser = new OptionParser();
 diff --git a/src/main/java/net/minecraft/world/level/block/state/StateHolder.java b/src/main/java/net/minecraft/world/level/block/state/StateHolder.java
-index 5f285d190186a2ff5a61d05070593e1d633dd79a..a01d14b9e20a61823a1f7366b136d0144278be28 100644
+index 5be5eabc222b9e20c083ff83fae52010b19ea854..c263220bc504bdb2067ac8920fceac6de1bb850e 100644
 --- a/src/main/java/net/minecraft/world/level/block/state/StateHolder.java
 +++ b/src/main/java/net/minecraft/world/level/block/state/StateHolder.java
-@@ -43,7 +43,7 @@ public abstract class StateHolder<O, S> {
+@@ -44,7 +44,7 @@ public abstract class StateHolder<O, S> {
  
      protected StateHolder(O owner, ImmutableMap<Property<?>, Comparable<?>> entries, MapCodec<S> codec) {
          this.owner = owner;
