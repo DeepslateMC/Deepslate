@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Tue, 21 Nov 2023 21:59:01 +0700
+Subject: [PATCH] Despawn shulker bullets on owner death
+
+
+diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DivineWorldConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DivineWorldConfig.java
+index 9eede8eb7fefc414f3a1207cd3ca2b33deb5ea13..ca344da743a7503795bdaeff0a1b14e0721f5092 100644
+--- a/src/main/java/org/deepslatemc/deepslate/configuration/DivineWorldConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/configuration/DivineWorldConfig.java
+@@ -84,4 +84,9 @@ public class DivineWorldConfig {
+         dontEjectPlayerFromBoatUnderwater = getBoolean("gameplay-mechanics.boat.dont-eject-players-from-boat-underwater", dontEjectPlayerFromBoatUnderwater);
+         alwaysAllowToEnterTheBoat = getBoolean("gameplay-mechanics.boat.always-allow-to-enter-the-boat", alwaysAllowToEnterTheBoat);
+     }
++
++    public boolean despawnShulkerBulletsOnOwnerDeath = true;
++    private void despawnShulkerBulletsOnOwnerDeath() {
++        despawnShulkerBulletsOnOwnerDeath = getBoolean("gameplay-mechanics.mob.shulker.despawn-bullets-on-player-death", despawnShulkerBulletsOnOwnerDeath);
++    }
+ }
+\ No newline at end of file
+diff --git a/src/main/java/net/minecraft/world/entity/projectile/ShulkerBullet.java b/src/main/java/net/minecraft/world/entity/projectile/ShulkerBullet.java
+index da0b7ee796c335875914481a5deda5eef5ddd442..ab1127b384cfd8a39543003b692121cc2ed74b4e 100644
+--- a/src/main/java/net/minecraft/world/entity/projectile/ShulkerBullet.java
++++ b/src/main/java/net/minecraft/world/entity/projectile/ShulkerBullet.java
+@@ -218,6 +218,17 @@ public class ShulkerBullet extends Projectile {
+         Vec3 vec3d;
+ 
+         if (!this.level().isClientSide) {
++            // Deepslate start - despawn shulker bullets on owner death
++            if (this.level().deepslateConfig.despawnShulkerBulletsOnOwnerDeath) {
++                if (!isInvulnerable()) {
++                    var owner = getOwner();
++                    if (owner == null || !owner.isAlive()) {
++                        discard();
++                        return;
++                    }
++                }
++            }
++            // Deepslate end
+             if (this.finalTarget == null && this.targetId != null) {
+                 this.finalTarget = ((ServerLevel) this.level()).getEntity(this.targetId);
+                 if (this.finalTarget == null) {
