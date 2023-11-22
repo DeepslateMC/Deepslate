@@ -259,8 +259,8 @@ index 0000000000000000000000000000000000000000..3b09fb4588332840daae00cfa76a4584
 +        commands = new HashMap<>();
 +        commands.put("deepslate", new DeepslateCommand("deepslate"));
 +
-+        version = getInt("config-version", 3);
-+        set("config-version", 3);
++        version = getInt("config-version", 4);
++        set("config-version", 4);
 +
 +        readConfig(DeepslateConfig.class, null);
 +
