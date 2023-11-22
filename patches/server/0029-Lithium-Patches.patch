@@ -1,0 +1,928 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Tue, 21 Nov 2023 01:33:21 -0500
+Subject: [PATCH] Lithium patches
+
+This Patch is simply the following patches merged into one: 0150-Yatopia-lithium-MixinDirection.patch 0152-Yatopia-lithium-PerlinNoiseSamplerMixin.patch 0153-Yatopia-lithium-VoronoiBiomeAccessTypeMixin.patch 0154-Yatopia-lithium-NoiseChunkGeneratorMixin.patch 0159-Yatopia-lithium-MixinBox.patch 0160-Yatopia-lithium-enum_values.patch 0161-Yatopia-lithium-MixinGoalSelector.patch 0162-Yatopia-lithium-HashedList.patch 0163-Yatopia-lithium-DataTrackerMixin.patch
+
+These lithium optimizations were originally ported by the YatopiaMC project (https://github.com/YatopiaMC/Yatopia)
+
+diff --git a/pom.xml b/pom.xml
+index aafe4d0962d641866bb0f82728719c102c56fcc1..c5f88a0ac1204ea206e951810fd58a5a8da13102 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -153,6 +153,12 @@
+             <version>1.1.0-SNAPSHOT</version>
+             <scope>compile</scope>
+         </dependency>
++        <!-- Deepslate - add commons-math3 for lithium patches -->
++        <dependency>
++            <groupId>org.apache.commons</groupId>
++            <artifactId>commons-math3</artifactId>
++            <version>3.6.1</version>
++        </dependency>
+     </dependencies>
+ 
+     <repositories>
+diff --git a/src/main/java/me/jellysquid/mods/lithium/common/util/collections/HashedList.java b/src/main/java/me/jellysquid/mods/lithium/common/util/collections/HashedList.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2d79932dbd1fc386a94b8d6ea3526934c54c2aad
+--- /dev/null
++++ b/src/main/java/me/jellysquid/mods/lithium/common/util/collections/HashedList.java
+@@ -0,0 +1,280 @@
++package me.jellysquid.mods.lithium.common.util.collections;
++
++import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
++import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
++import java.util.Collection;
++import java.util.Iterator;
++import java.util.List;
++import java.util.ListIterator;
++import java.util.NoSuchElementException;
++
++/**
++ * Wraps a {@link List} with a hash table which provides O(1) lookups for {@link Collection#contains(Object)}. The type
++ * contained by this list must use reference-equality semantics.
++ */
++@SuppressWarnings("SuspiciousMethodCalls")
++public class HashedList<T> implements List<T> {
++    private final ReferenceArrayList<T> list;
++    private final Reference2IntOpenHashMap<T> counter;
++
++    public HashedList(List<T> list) {
++        this.list = new ReferenceArrayList<>();
++        this.list.addAll(list);
++
++        this.counter = new Reference2IntOpenHashMap<>();
++        this.counter.defaultReturnValue(0);
++
++        for (T obj : this.list) {
++            this.counter.addTo(obj, 1);
++        }
++    }
++
++    @Override
++    public int size() {
++        return this.list.size();
++    }
++
++    @Override
++    public boolean isEmpty() {
++        return this.list.isEmpty();
++    }
++
++    @Override
++    public boolean contains(Object o) {
++        return this.counter.containsKey(o);
++    }
++
++    @Override
++    public Iterator<T> iterator() {
++        return this.listIterator();
++    }
++
++    @Override
++    public Object[] toArray() {
++        return this.list.toArray();
++    }
++
++    @SuppressWarnings("SuspiciousToArrayCall")
++    @Override
++    public <T1> T1[] toArray(T1[] a) {
++        return this.list.toArray(a);
++    }
++
++    @Override
++    public boolean add(T t) {
++        this.trackReferenceAdded(t);
++
++        return this.list.add(t);
++    }
++
++    @Override
++    public boolean remove(Object o) {
++        this.trackReferenceRemoved(o);
++
++        return this.list.remove(o);
++    }
++
++    @Override
++    public boolean containsAll(Collection<?> c) {
++        for (Object obj : c) {
++            if (!this.counter.containsKey(obj)) {
++                return false;
++            }
++        }
++
++        return true;
++    }
++
++    @Override
++    public boolean addAll(Collection<? extends T> c) {
++        for (T obj : c) {
++            this.trackReferenceAdded(obj);
++        }
++
++        return this.list.addAll(c);
++    }
++
++    @Override
++    public boolean addAll(int index, Collection<? extends T> c) {
++        for (T obj : c) {
++            this.trackReferenceAdded(obj);
++        }
++
++        return this.list.addAll(index, c);
++    }
++
++    @Override
++    public boolean removeAll(Collection<?> c) {
++        for (Object obj : c) {
++            this.trackReferenceRemoved(obj);
++        }
++
++        return this.list.removeAll(c);
++    }
++
++    @Override
++    public boolean retainAll(Collection<?> c) {
++        return this.list.retainAll(c);
++    }
++
++    @Override
++    public void clear() {
++        this.counter.clear();
++        this.list.clear();
++    }
++
++    @Override
++    public T get(int index) {
++        return this.list.get(index);
++    }
++
++    @Override
++    public T set(int index, T element) {
++        T prev = this.list.set(index, element);
++
++        if (prev != element) {
++            if (prev != null) {
++                this.trackReferenceRemoved(prev);
++            }
++
++            this.trackReferenceAdded(element);
++        }
++
++        return prev;
++    }
++
++    @Override
++    public void add(int index, T element) {
++        this.trackReferenceAdded(element);
++
++        this.list.add(index, element);
++    }
++
++    @Override
++    public T remove(int index) {
++        T prev = this.list.remove(index);
++
++        if (prev != null) {
++            this.trackReferenceRemoved(prev);
++        }
++
++        return prev;
++    }
++
++    @Override
++    public int indexOf(Object o) {
++        return this.list.indexOf(o);
++    }
++
++    @Override
++    public int lastIndexOf(Object o) {
++        return this.list.lastIndexOf(o);
++    }
++
++    @Override
++    public ListIterator<T> listIterator() {
++        return this.listIterator(0);
++    }
++
++    @Override
++    public ListIterator<T> listIterator(int index) {
++        return new ListIterator<T>() {
++            private final ListIterator<T> inner = HashedList.this.list.listIterator(index);
++
++            @Override
++            public boolean hasNext() {
++                return this.inner.hasNext();
++            }
++
++            @Override
++            public T next() {
++                return this.inner.next();
++            }
++
++            @Override
++            public boolean hasPrevious() {
++                return this.inner.hasPrevious();
++            }
++
++            @Override
++            public T previous() {
++                return this.inner.previous();
++            }
++
++            @Override
++            public int nextIndex() {
++                return this.inner.nextIndex();
++            }
++
++            @Override
++            public int previousIndex() {
++                return this.inner.previousIndex();
++            }
++
++            @Override
++            public void remove() {
++                int last = this.previousIndex();
++
++                if (last == -1) {
++                    throw new NoSuchElementException();
++                }
++
++                T prev = HashedList.this.get(last);
++
++                if (prev != null) {
++                    HashedList.this.trackReferenceRemoved(prev);
++                }
++
++                this.inner.remove();
++            }
++
++            @Override
++            public void set(T t) {
++                int last = this.previousIndex();
++
++                if (last == -1) {
++                    throw new NoSuchElementException();
++                }
++
++                T prev = HashedList.this.get(last);
++
++                if (prev != t) {
++                    if (prev != null) {
++                        HashedList.this.trackReferenceRemoved(prev);
++                    }
++
++                    HashedList.this.trackReferenceAdded(t);
++                }
++
++                this.inner.remove();
++            }
++
++            @Override
++            public void add(T t) {
++                HashedList.this.trackReferenceAdded(t);
++
++                this.inner.add(t);
++            }
++        };
++    }
++
++    @Override
++    public List<T> subList(int fromIndex, int toIndex) {
++        return this.list.subList(fromIndex, toIndex);
++    }
++
++    private void trackReferenceAdded(T t) {
++        this.counter.addTo(t, 1);
++    }
++
++    @SuppressWarnings("unchecked")
++    private void trackReferenceRemoved(Object o) {
++        if (this.counter.addTo((T) o, -1) <= 1) {
++            this.counter.removeInt(o);
++        }
++    }
++
++    public static <T> HashedList<T> wrapper(List<T> list) {
++        return new HashedList<>(list);
++    }
++}
+diff --git a/src/main/java/net/minecraft/server/AxisAlignedBB.java b/src/main/java/net/minecraft/server/AxisAlignedBB.java
+index fd3bb6dfa6cc060e9785c22a9e61a4325c348e36..279c7824f427aebcea8b8877db8e8230af71715b 100644
+--- a/src/main/java/net/minecraft/server/AxisAlignedBB.java
++++ b/src/main/java/net/minecraft/server/AxisAlignedBB.java
+@@ -193,12 +193,38 @@ public class AxisAlignedBB {
+         return new AxisAlignedBB(vec3d.x, vec3d.y, vec3d.z, vec3d.x + 1.0D, vec3d.y + 1.0D, vec3d.z + 1.0D);
+     }
+ 
++    /**
++     * @reason Simplify the code to better help the JVM optimize it
++     * @author JellySquid
++     */
+     public double a(EnumDirection.EnumAxis enumdirection_enumaxis) {
+-        return enumdirection_enumaxis.a(this.minX, this.minY, this.minZ);
++		switch (enumdirection_enumaxis) {
++		case X:
++			return this.minX;
++		case Y:
++			return this.minY;
++		case Z:
++			return this.minZ;
++		}
++
++		throw new IllegalArgumentException();
+     }
+ 
++    /**
++     * @reason Simplify the code to better help the JVM optimize it
++     * @author JellySquid
++     */
+     public double b(EnumDirection.EnumAxis enumdirection_enumaxis) {
+-        return enumdirection_enumaxis.a(this.maxX, this.maxY, this.maxZ);
++		switch (enumdirection_enumaxis) {
++		case X:
++			return this.maxX;
++		case Y:
++			return this.maxY;
++		case Z:
++			return this.maxZ;
++		}
++
++		throw new IllegalArgumentException();
+     }
+ 
+     public boolean equals(Object object) {
+diff --git a/src/main/java/net/minecraft/server/BlockPiston.java b/src/main/java/net/minecraft/server/BlockPiston.java
+index 5d3bb5f393a1e0e4a2e8b9a466530a91279697a9..7f084e7f11a829c10d113c7fb39eec0b8ad77080 100644
+--- a/src/main/java/net/minecraft/server/BlockPiston.java
++++ b/src/main/java/net/minecraft/server/BlockPiston.java
+@@ -127,9 +127,10 @@ public class BlockPiston extends BlockDirectional {
+         }
+ 
+     }
++    private static final EnumDirection[] aenumdirection = EnumDirection.values(); // Yatopia
+ 
+     private boolean a(World world, BlockPosition blockposition, EnumDirection enumdirection) {
+-        EnumDirection[] aenumdirection = EnumDirection.values();
++        //EnumDirection[] aenumdirection = EnumDirection.values(); // Yatopia
+         int i = aenumdirection.length;
+ 
+         int j;
+@@ -146,12 +147,12 @@ public class BlockPiston extends BlockDirectional {
+             return true;
+         } else {
+             BlockPosition blockposition1 = blockposition.up();
+-            EnumDirection[] aenumdirection1 = EnumDirection.values();
++            //EnumDirection[] aenumdirection1 = EnumDirection.values(); // Yatopia
+ 
+-            j = aenumdirection1.length;
++            j = aenumdirection.length; // Yatopia
+ 
+             for (int k = 0; k < j; ++k) {
+-                EnumDirection enumdirection2 = aenumdirection1[k];
++                EnumDirection enumdirection2 = aenumdirection[k]; // Yatopia
+ 
+                 if (enumdirection2 != EnumDirection.DOWN && world.isBlockFacePowered(blockposition1.shift(enumdirection2), enumdirection2)) {
+                     return true;
+diff --git a/src/main/java/net/minecraft/server/DataWatcher.java b/src/main/java/net/minecraft/server/DataWatcher.java
+index e69093b411f76ea4090789576f8fb6635bd02ca5..4a14431b198c227eb6f0f68eaac14f5c09fc3036 100644
+--- a/src/main/java/net/minecraft/server/DataWatcher.java
++++ b/src/main/java/net/minecraft/server/DataWatcher.java
+@@ -27,6 +27,77 @@ public class DataWatcher {
+     private boolean f = true;
+     private boolean g;
+ 
++    // Yatopia lithium start
++    private static final int DEFAULT_ENTRY_COUNT = 10, GROW_FACTOR = 8;
++    /** Mirrors the vanilla backing entries map. Each DataWatcher.Item can be accessed in this array through its ID. **/
++    private DataWatcher.Item<?>[] entriesArray = new DataWatcher.Item<?>[DEFAULT_ENTRY_COUNT];
++
++    /**
++     * We redirect the call to add a tracked data to the internal map so we can add it to our new storage structure. This
++     * should only ever occur during entity initialization. Type-erasure is a bit of a pain here since we must redirect
++     * a calls to the generic Map interface.
++     */
++    private Object onAddTrackedDataInsertMap(Int2ObjectOpenHashMap<DataWatcher.Item<?>> map, int keyRaw, DataWatcher.Item<?> valueRaw) {
++        int k = keyRaw;
++        DataWatcher.Item<?> v = (DataWatcher.Item<?>) valueRaw;
++
++        DataWatcher.Item<?>[] storage = this.entriesArray;
++
++        // Check if we need to grow the backing array to accommodate the new key range
++        if (storage.length <= k) {
++            // Grow the array to accommodate 8 entries after this one, but limit it to never be larger
++            // than 256 entries as per the vanilla limit
++            int newSize = Math.min(k + GROW_FACTOR, 256);
++
++            this.entriesArray = storage = java.util.Arrays.copyOf(storage, newSize);
++        }
++
++        // Update the storage
++        storage[k] = v;
++
++        // Ensure that the vanilla backing storage is still updated appropriately
++        return this.entries.put(k, v);
++    }
++
++    /**
++     * @reason Avoid integer boxing/unboxing and use our array-based storage
++     * @author JellySquid
++     */
++    private <T> DataWatcher.Item<T> getEntry(DataWatcherObject<T> data) {
++        try {
++            DataWatcher.Item<?>[] array = this.entriesArray;
++
++            int id = data.a();
++
++            // The vanilla implementation will simply return null if the tracker doesn't contain the specified entry. However,
++            // accessing an array with an invalid pointer will throw a OOB exception, where-as a HashMap would simply
++            // return null. We check this case (which should be free, even if so insignificant, as the subsequent bounds
++            // check will hopefully be eliminated)
++            if (id < 0 || id >= array.length) {
++                return null;
++            }
++
++            // This cast can fail if trying to access a entry which doesn't belong to this tracker, as the ID could
++            // instead point to an entry of a different type. However, that is also vanilla behaviour.
++            // noinspection unchecked
++            return (DataWatcher.Item<T>) array[id];
++        } catch (Throwable cause) {
++            // Move to another method so this function can be in-lined better
++            throw onGetException(cause, data);
++        }
++    }
++
++    private static <T> ReportedException onGetException(Throwable cause, DataWatcherObject<T> data) {
++        CrashReport report = CrashReport.a(cause, "Getting synced entity data");
++
++        CrashReportSystemDetails section = report.a("Synced entity data");
++        section.a("Data ID", data);
++
++        return new ReportedException(report);
++    }
++
++    // Yatopia lithium end
++
+     public DataWatcher(Entity entity) {
+         this.entity = entity;
+     }
+@@ -91,7 +162,8 @@ public class DataWatcher {
+         DataWatcher.Item<T> datawatcher_item = new DataWatcher.Item<>(datawatcherobject, t0);
+ 
+         // this.lock.writeLock().lock(); // Spigot - not required
+-        this.entries.put(datawatcherobject.a(), datawatcher_item);
++        //this.entries.put(datawatcherobject.a(), datawatcher_item);
++        this.onAddTrackedDataInsertMap(this.entries, datawatcherobject.a(), datawatcher_item); // Yatopia lithium
+         this.f = false;
+         // this.lock.writeLock().unlock(); // Spigot - not required
+     }
+@@ -122,7 +194,8 @@ public class DataWatcher {
+     }
+ 
+     public <T> T get(DataWatcherObject<T> datawatcherobject) {
+-        return this.b(datawatcherobject).b();
++	    return getEntry(datawatcherobject).b(); // Yatopia
++        //return this.b(datawatcherobject).b();
+     }
+ 
+     public <T> void set(DataWatcherObject<T> datawatcherobject, T t0) {
+diff --git a/src/main/java/net/minecraft/server/EntityLiving.java b/src/main/java/net/minecraft/server/EntityLiving.java
+index 60216266e9b18871b7b00be55805bce191e2105b..8202912b185c65394f503f843f30a47c5b0b5809 100644
+--- a/src/main/java/net/minecraft/server/EntityLiving.java
++++ b/src/main/java/net/minecraft/server/EntityLiving.java
+@@ -2604,10 +2604,12 @@ public abstract class EntityLiving extends Entity {
+ 
+     }
+ 
++    private static final EnumItemSlot[] aenumitemslot = EnumItemSlot.values(); // Yatopia
++
+     @Nullable
+     private Map<EnumItemSlot, ItemStack> q() {
+         Map<EnumItemSlot, ItemStack> map = null;
+-        EnumItemSlot[] aenumitemslot = EnumItemSlot.values();
++        //EnumItemSlot[] aenumitemslot = EnumItemSlot.values(); // Yatopia
+         int i = aenumitemslot.length;
+ 
+         for (int j = 0; j < i; ++j) {
+diff --git a/src/main/java/net/minecraft/server/EnumAxisCycle.java b/src/main/java/net/minecraft/server/EnumAxisCycle.java
+index a7c2543fdd4d5f6a04c45ec42472837ccaea9619..92ab79532d29341e8840341ff5ee8f5203cb4aad 100644
+--- a/src/main/java/net/minecraft/server/EnumAxisCycle.java
++++ b/src/main/java/net/minecraft/server/EnumAxisCycle.java
+@@ -26,12 +26,24 @@ public enum EnumAxisCycle {
+ 
+         @Override
+         public EnumDirection.EnumAxis a(EnumDirection.EnumAxis enumdirection_enumaxis) {
+-            return null.d[Math.floorMod(enumdirection_enumaxis.ordinal() + 1, 3)];
++            // Yatopia start - replace logic
++            //return null.d[Math.floorMod(enumdirection_enumaxis.ordinal() + 1, 3)];
++            switch (enumdirection_enumaxis) {
++                case X:
++                    return EnumDirection.EnumAxis.Y;
++                case Y:
++                    return EnumDirection.EnumAxis.Z;
++                case Z:
++                    return EnumDirection.EnumAxis.X;
++            }
++
++            throw new IllegalArgumentException();
++            // Yatopia end
+         }
+ 
+         @Override
+         public EnumAxisCycle a() {
+-            return null.BACKWARD;
++            return BACKWARD; // Yatopia
+         }
+     },
+     BACKWARD {
+@@ -42,12 +54,24 @@ public enum EnumAxisCycle {
+ 
+         @Override
+         public EnumDirection.EnumAxis a(EnumDirection.EnumAxis enumdirection_enumaxis) {
+-            return null.d[Math.floorMod(enumdirection_enumaxis.ordinal() - 1, 3)];
++            // Yatopia start - replaced logic
++            //return null.d[Math.floorMod(enumdirection_enumaxis.ordinal() - 1, 3)];
++            switch (enumdirection_enumaxis) {
++                case X:
++                    return EnumDirection.EnumAxis.Z;
++                case Y:
++                    return EnumDirection.EnumAxis.X;
++                case Z:
++                    return EnumDirection.EnumAxis.Y;
++            }
++
++            throw new IllegalArgumentException();
++            // Yatopia end
+         }
+ 
+         @Override
+         public EnumAxisCycle a() {
+-            return null.FORWARD;
++            return FORWARD; // Yatopia
+         }
+     };
+ 
+diff --git a/src/main/java/net/minecraft/server/EnumDirection.java b/src/main/java/net/minecraft/server/EnumDirection.java
+index 83366996a0f9ae4684cc5424ace7630cc72b75f7..f4fe50507bd8960bee23ff9e11e2780063d299a7 100644
+--- a/src/main/java/net/minecraft/server/EnumDirection.java
++++ b/src/main/java/net/minecraft/server/EnumDirection.java
+@@ -20,13 +20,13 @@ public enum EnumDirection implements INamable {
+     DOWN(0, 1, -1, "down", EnumDirection.EnumAxisDirection.NEGATIVE, EnumDirection.EnumAxis.Y, new BaseBlockPosition(0, -1, 0)), UP(1, 0, -1, "up", EnumDirection.EnumAxisDirection.POSITIVE, EnumDirection.EnumAxis.Y, new BaseBlockPosition(0, 1, 0)), NORTH(2, 3, 2, "north", EnumDirection.EnumAxisDirection.NEGATIVE, EnumDirection.EnumAxis.Z, new BaseBlockPosition(0, 0, -1)), SOUTH(3, 2, 0, "south", EnumDirection.EnumAxisDirection.POSITIVE, EnumDirection.EnumAxis.Z, new BaseBlockPosition(0, 0, 1)), WEST(4, 5, 1, "west", EnumDirection.EnumAxisDirection.NEGATIVE, EnumDirection.EnumAxis.X, new BaseBlockPosition(-1, 0, 0)), EAST(5, 4, 3, "east", EnumDirection.EnumAxisDirection.POSITIVE, EnumDirection.EnumAxis.X, new BaseBlockPosition(1, 0, 0));
+ 
+     private final int g;
+-    private final int h;
++    private final int h; // Yatopia this is idOpposit(yarn)
+     private final int i;
+     private final String j;
+     private final EnumDirection.EnumAxis k;
+     private final EnumDirection.EnumAxisDirection l;
+     private final BaseBlockPosition m;
+-    private static final EnumDirection[] n = values();
++    private static final EnumDirection[] n = values(); private static final EnumDirection[] ALL = n;// Yatopia OBF HELPER
+     private static final Map<String, EnumDirection> o = (Map) Arrays.stream(EnumDirection.n).collect(Collectors.toMap(EnumDirection::m, (enumdirection) -> {
+         return enumdirection;
+     }));
+@@ -98,8 +98,12 @@ public enum EnumDirection implements INamable {
+         return this.l;
+     }
+ 
++    /**
++     * @reason Avoid the modulo/abs operations
++     * @author JellySquid
++     */
+     public EnumDirection opposite() {
+-        return fromType1(this.h);
++        return ALL[this.h];
+     }
+ 
+     public EnumDirection rotateCW() { return g(); } // Purpur - OBFHELPER
+@@ -200,8 +204,12 @@ public enum EnumDirection implements INamable {
+         return (float) ((this.i & 3) * 90);
+     }
+ 
++    /**
++     * @reason Do not allocate an excessive number of Direction arrays
++     * @author JellySquid
++     */
+     public static EnumDirection a(Random random) {
+-        return (EnumDirection) SystemUtils.a((Object[]) EnumDirection.n, random);
++        return ALL[random.nextInt(ALL.length)];
+     }
+ 
+     public static EnumDirection a(double d0, double d1, double d2) {
+diff --git a/src/main/java/net/minecraft/server/GenLayerZoomVoronoi.java b/src/main/java/net/minecraft/server/GenLayerZoomVoronoi.java
+index 70ea171edc419f8614004b6e50fc34b8fd9b4a20..47415b738c83541f76d504ad4d5f619ccd023feb 100644
+--- a/src/main/java/net/minecraft/server/GenLayerZoomVoronoi.java
++++ b/src/main/java/net/minecraft/server/GenLayerZoomVoronoi.java
+@@ -8,6 +8,8 @@ public enum GenLayerZoomVoronoi implements GenLayerZoomer {
+ 
+     @Override
+     public BiomeBase a(long i, int j, int k, int l, BiomeManager.Provider biomemanager_provider) {
++        // Yatopia start - replaced logic
++        /*
+         int i1 = j - 2;
+         int j1 = k - 2;
+         int k1 = l - 2;
+@@ -54,6 +56,75 @@ public enum GenLayerZoomVoronoi implements GenLayerZoomer {
+         l2 = (k2 & 2) == 0 ? i2 : i2 + 1;
+         i3 = (k2 & 1) == 0 ? j2 : j2 + 1;
+         return biomemanager_provider.getBiome(k3, l2, i3);
++         */
++        int x1 = j - 2;
++        int y1 = k - 2;
++        int z1 = l - 2;
++
++        int x2 = x1 >> 2;
++        int y2 = y1 >> 2;
++        int z2 = z1 >> 2;
++
++        double x3 = (double) (x1 & 3) / 4.0D;
++        double y3 = (double) (y1 & 3) / 4.0D;
++        double z3 = (double) (z1 & 3) / 4.0D;
++
++        int retX = Integer.MIN_VALUE;
++        int retY = Integer.MIN_VALUE;
++        int retZ = Integer.MIN_VALUE;
++
++        // This code would normally allocate an array to store each iteration's results, then scan back over it
++        // to determine the closest one. We can avoid the unnecessary step and simply keep track of the nearest one.
++        double minDist = Double.POSITIVE_INFINITY;
++
++        for (int i1 = 0; i1 < 8; i1++) {
++            // Block sample positions
++            int bX;
++            int bY;
++            int bZ;
++
++            // Sample positions
++            double sX;
++            double sY;
++            double sZ;
++
++            if ((i1 & 0b100) == 0) {
++                bX = x2;
++                sX = x3;
++            } else {
++                bX = x2 + 1;
++                sX = x3 - 1.0D;
++            }
++
++            if ((i1 & 0b010) == 0) {
++                bY = y2;
++                sY = y3;
++            } else {
++                bY = y2 + 1;
++                sY = y3 - 1.0D;
++            }
++
++            if ((i1 & 0b001) == 0) {
++                bZ = z2;
++                sZ = z3;
++            } else {
++                bZ = z2 + 1;
++                sZ = z3 - 1.0D;
++            }
++
++            double dist = a(i, bX, bY, bZ, sX, sY, sZ);
++
++            if (minDist > dist) {
++                minDist = dist;
++
++                retX = bX;
++                retY = bY;
++                retZ = bZ;
++            }
++        }
++
++        return biomemanager_provider.getBiome(retX, retY, retZ);
++        // Yatopia end
+     }
+ 
+     private static double a(long i, int j, int k, int l, double d0, double d1, double d2) {
+@@ -76,9 +147,14 @@ public enum GenLayerZoomVoronoi implements GenLayerZoomer {
+     }
+ 
+     private static double a(long i) {
++        // Yatopia start - replaced logic
++        /*
+         double d0 = (double) ((int) Math.floorMod(i >> 24, 1024L)) / 1024.0D;
+ 
+         return (d0 - 0.5D) * 0.9D;
++         */
++        return (((i >> 24) & 1023L) - 512) * 0.00087890625; // * 0.9 / 1024.0d
++        // Yatopia end
+     }
+ 
+     private static double a(double d0) {
+diff --git a/src/main/java/net/minecraft/server/NoiseGeneratorPerlin.java b/src/main/java/net/minecraft/server/NoiseGeneratorPerlin.java
+index d7ca619b228e2a5a461085e0c5222e6a36a66fe0..ea157542df2617eec6b5a62331e1daa3c086ffae 100644
+--- a/src/main/java/net/minecraft/server/NoiseGeneratorPerlin.java
++++ b/src/main/java/net/minecraft/server/NoiseGeneratorPerlin.java
+@@ -1,6 +1,7 @@
+ package net.minecraft.server;
+ 
+ import java.util.Random;
++import org.apache.commons.math3.util.FastMath; // Yatopia
+ 
+ public final class NoiseGeneratorPerlin {
+ 
+@@ -8,6 +9,12 @@ public final class NoiseGeneratorPerlin {
+     public final double a;
+     public final double b;
+     public final double c;
++    // Yatopia start - Faster Perlin
++    private static final int GRADIENT_STRIDE = 4;
++    private static final int GRADIENT_STRIDE_SH = 2;
++
++    private final byte[] gradientTable = new byte[256 * GRADIENT_STRIDE];
++    // Yatopia end
+ 
+     public NoiseGeneratorPerlin(Random random) {
+         this.a = random.nextDouble() * 256.0D;
+@@ -29,8 +36,19 @@ public final class NoiseGeneratorPerlin {
+             this.d[i + j] = b0;
+         }
+ 
++        // Yatopia start
++        for (i = 0; i < 256; i++) {
++            int hash = this.d[i & 255] & 15;
++
++            for (int j = 0; j < 3; j++) {
++                this.gradientTable[(i * GRADIENT_STRIDE) + j] = (byte) NoiseGenerator3Handler.a[hash][j];
++            }
++        }
++        // Yatopia end
+     }
+ 
++    // Yatopia start - replaced logic
++    /*
+     public double a(double d0, double d1, double d2, double d3, double d4) {
+         double d5 = d0 + this.a;
+         double d6 = d1 + this.b;
+@@ -55,6 +73,125 @@ public final class NoiseGeneratorPerlin {
+         }
+ 
+         return this.a(i, j, k, d8, d9 - d14, d10, d11, d12, d13);
++         */
++    public final double sample(double x, double y, double z, double d, double e) { return a(x, y, z, d, e); } // Yatopia - OBFHELPER
++    public final double a(double x, double y, double z, double d, double e) {
++        final double ox = x + this.a;
++        final double oy = y + this.b;
++        final double oz = z + this.c;
++
++        final double fox = FastMath.floor(ox);
++        final double foy = FastMath.floor(oy);
++        final double foz = FastMath.floor(oz);
++
++        final double oox = ox - fox;
++        double ooy = oy - foy;
++        final double ooz = oz - foz;
++
++        final double fx = oox * oox * oox * (oox * (oox * 6.0 - 15.0) + 10.0);
++        final double fy = ooy * ooy * ooy * (ooy * (ooy * 6.0 - 15.0) + 10.0);
++        final double fz = ooz * ooz * ooz * (ooz * (ooz * 6.0 - 15.0) + 10.0);
++
++        if (d != 0.0D) { ooy = ooy - (FastMath.floor(FastMath.min(e, ooy) / d) * d); }
++
++        final int sectionX = (int) fox;
++        final int sectionY = (int) foy;
++        final int sectionZ = (int) foz;
++
++        final byte[] perm = this.d;
++
++        final int i = (perm[sectionX & 255] & 255) + sectionY;
++        final int l = (perm[(sectionX + 1) & 255] & 255) + sectionY;
++
++        final int j = (perm[255 & i] & 255) + sectionZ;
++        final int m = (perm[l & 255] & 255) + sectionZ;
++
++        final int k = (perm[(i + 1) & 255] & 255) + sectionZ;
++        final int n = (perm[(l + 1) & 255] & 255) + sectionZ;
++
++        final double localX2 = oox - 1.0D;
++        final double localY2 = ooy - 1.0D;
++        final double localZ2 = ooz - 1.0D;
++
++        final int d00 = (j & 255) << GRADIENT_STRIDE_SH;
++        final int d01 = (m & 255) << GRADIENT_STRIDE_SH;
++        final int d02 = (k & 255) << GRADIENT_STRIDE_SH;
++        final int d03 = (n & 255) << GRADIENT_STRIDE_SH;
++
++        final int d10 = ((j + 1) & 255) << GRADIENT_STRIDE_SH;
++        final int d11 = ((m + 1) & 255) << GRADIENT_STRIDE_SH;
++        final int d12 = ((k + 1) & 255) << GRADIENT_STRIDE_SH;
++        final int d13 = ((n + 1) & 255) << GRADIENT_STRIDE_SH;
++
++        final byte[] grad = this.gradientTable;
++
++        final double g00x = grad[d00] * oox;
++        final double g00y = grad[d00 + 1] * ooy;
++        final double g00z = grad[d00 + 2] * ooz;
++
++        final double g01x = grad[d01] * localX2;
++        final double g01y = grad[d01 + 1] * ooy;
++        final double g01z = grad[d01 + 2] * ooz;
++
++        final double g02x = grad[d02] * oox;
++        final double g02y = grad[d02 + 1] * localY2;
++        final double g02z = grad[d02 + 2] * ooz;
++
++        final double g03x = grad[d03] * localX2;
++        final double g03y = grad[d03 + 1] * localY2;
++        final double g03z = grad[d03 + 2] * ooz;
++
++        final double g10x = grad[d10] * oox;
++        final double g10y = grad[d10 + 1] * ooy;
++        final double g10z = grad[d10 + 2] * localZ2;
++
++        final double g11x = grad[d11] * localX2;
++        final double g11y = grad[d11 + 1] * ooy;
++        final double g11z = grad[d11 + 2] * localZ2;
++
++        final double g12x = grad[d12] * oox;
++        final double g12y = grad[d12 + 1] * localY2;
++        final double g12z = grad[d12 + 2] * localZ2;
++
++        final double g13x = grad[d13] * localX2;
++        final double g13y = grad[d13 + 1] * localY2;
++        final double g13z = grad[d13 + 2] * localZ2;
++
++        final double g00 = g00x + g00y + g00z;
++        final double g01 = g01x + g01y + g01z;
++        final double g02 = g02x + g02y + g02z;
++        final double g03 = g03x + g03y + g03z;
++        final double g10 = g10x + g10y + g10z;
++        final double g11 = g11x + g11y + g11z;
++        final double g12 = g12x + g12y + g12z;
++        final double g13 = g13x + g13y + g13z;
++
++        final double ba1 = g01 - g00;
++        final double ba2 = g11 - g10;
++        final double dc1 = g03 - g02;
++        final double dc2 = g13 - g12;
++
++        final double dba1 = fx * ba1;
++        final double dba2 = fx * ba2;
++        final double ddc1 = fx * dc1;
++        final double ddc2 = fx * dc2;
++
++        final double dd0 = g00 + dba1;
++        final double dd1 = g10 + dba2;
++        final double dd2 = g02 + ddc1;
++        final double dd3 = g12 + ddc2;
++
++        final double aa0 = dd2 - dd0;
++        final double aa1 = dd3 - dd1;
++
++        final double y20 = fy * aa0;
++        final double y31 = fy * aa1;
++
++        final double aa2 = dd0 + y20;
++        final double aa3 = dd1 + y31;
++
++        return dd0 + y20 + (fz * (aa3 - aa2));
++        // Yatopia end
+     }
+ 
+     private static double a(int i, double d0, double d1, double d2) {
+diff --git a/src/main/java/net/minecraft/server/PathfinderGoalSelector.java b/src/main/java/net/minecraft/server/PathfinderGoalSelector.java
+index d3f0327a2a7cdedf3fe8d10df981a9f1cb378d26..fdf9d407f3f1d9aabcd835ed868391c6658eaae0 100644
+--- a/src/main/java/net/minecraft/server/PathfinderGoalSelector.java
++++ b/src/main/java/net/minecraft/server/PathfinderGoalSelector.java
+@@ -11,6 +11,7 @@ import java.util.function.Supplier;
+ import java.util.stream.Stream;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
++import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet; // Yatopia
+ 
+ public class PathfinderGoalSelector {
+ 
+@@ -27,7 +28,7 @@ public class PathfinderGoalSelector {
+         }
+     };
+     private final Map<PathfinderGoal.Type, PathfinderGoalWrapped> c = new EnumMap(PathfinderGoal.Type.class);
+-    private final Set<PathfinderGoalWrapped> d = Sets.newLinkedHashSet(); public final Set<PathfinderGoalWrapped> getTasks() { return d; }// Paper - OBFHELPER // Paper - private -> public
++    private final Set<PathfinderGoalWrapped> d = new ObjectLinkedOpenHashSet<>();/* Yatopia better set */ public final Set<PathfinderGoalWrapped> getTasks() { return d; }// Paper - OBFHELPER // Paper - private -> public
+     private final Supplier<GameProfilerFiller> e;
+     private final EnumSet<PathfinderGoal.Type> f = EnumSet.noneOf(PathfinderGoal.Type.class); // Paper unused, but dummy to prevent plugins from crashing as hard. Theyll need to support paper in a special case if this is super important, but really doesn't seem like it would be.
+     private final OptimizedSmallEnumSet<PathfinderGoal.Type> goalTypes = new OptimizedSmallEnumSet<>(PathfinderGoal.Type.class); // Paper - remove streams from pathfindergoalselector
+diff --git a/src/main/java/net/minecraft/server/PistonExtendsChecker.java b/src/main/java/net/minecraft/server/PistonExtendsChecker.java
+index 95aeaaf0bb07c5ecf7117dae3382b0f0aac6426f..222e3e609b2e9217f6913297ee1dca2b46441fa2 100644
+--- a/src/main/java/net/minecraft/server/PistonExtendsChecker.java
++++ b/src/main/java/net/minecraft/server/PistonExtendsChecker.java
+@@ -166,10 +166,11 @@ public class PistonExtendsChecker {
+         this.f.addAll(list1);
+         this.f.addAll(list2);
+     }
++    private static final EnumDirection[] aenumdirection = EnumDirection.values(); // Yatopia
+ 
+     private boolean a(BlockPosition blockposition) {
+         IBlockData iblockdata = this.a.getType(blockposition);
+-        EnumDirection[] aenumdirection = EnumDirection.values();
++        //EnumDirection[] aenumdirection = EnumDirection.values(); // Yatopia
+         int i = aenumdirection.length;
+ 
+         for (int j = 0; j < i; ++j) {
