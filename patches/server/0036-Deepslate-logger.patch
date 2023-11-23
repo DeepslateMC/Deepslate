@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pancakse <pancakseyt@gmail.com>
+Date: Wed, 22 Nov 2023 18:56:03 +0700
+Subject: [PATCH] Deepslate logger
+
+
+diff --git a/src/main/java/org/deepslatemc/deepslate/DeepslateLogger.java b/src/main/java/org/deepslatemc/deepslate/DeepslateLogger.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6c57659b8cb505421b08c26a72d46281ddfa8ec5
+--- /dev/null
++++ b/src/main/java/org/deepslatemc/deepslate/DeepslateLogger.java
+@@ -0,0 +1,17 @@
++package org.deepslatemc.deepslate;
++
++import org.bukkit.Bukkit;
++
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++public class DeepslateLogger extends Logger {
++    public static final DeepslateLogger LOGGER = new DeepslateLogger();
++
++       private DeepslateLogger() {
++            super("Deepslate", null);
++
++           setParent(Bukkit.getLogger());
++           setLevel(Level.ALL);
++    }
++}
+\ No newline at end of file
