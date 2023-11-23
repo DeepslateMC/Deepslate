@@ -149,7 +149,7 @@ index 0000000000000000000000000000000000000000..1efcf89e3df4f7d9e2ead1e54c41f0be
 +public class DeepslateCommand extends Command {
 +    public DeepslateCommand(String name) {
 +        super(name);
-+        this.description = "Deepslate related commands";
++        this.description = "Related Commands to Deepslate";
 +        this.usageMessage = "/deepslate [reload | version]";
 +        this.setPermission("bukkit.command.deepslate");
 +    }
