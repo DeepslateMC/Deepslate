@@ -58,7 +58,8 @@ index 0000000000000000000000000000000000000000..9a03cd8f8fc82450fdf7b46a405ea6b6
 +                List<String> header = new ArrayList<>();
 +                header.add("This is the main configuration file of DeepslateMC");
 +                header.add("You can find an explanation of all options here: https://github.com/Pascalpex/DeepslateMC/wiki");
-+                header.add("You can get support on our Discord server: https://discord.gg/BGrhNnVczp");
++                header.add("You can get support on this Discord server: https://discord.gg/BGrhNnVczp");
++                header.add("This config is not supported by DeepslateMC Team But By Pascalpex/DeepslateMC)
 +                config.options().setHeader(header);
 +                save();
 +            }
