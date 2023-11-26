@@ -1,27 +1,48 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: peaches94 <peachescu94@gmail.com>
 Date: Sat, 2 Jul 2022 00:35:56 -0500
-Subject: [PATCH] feat: multithreaded tracker
+Subject: [PATCH] Multithreaded Tracker
 
-Co-authored-by: Paul Sauve <paul@technove.co>
-Co-authored-by: Kevin Raneri <kevin.raneri@gmail.com>
+Original code by Bloom-host, licensed under GPL v3
+You can find the original code on https://github.com/Bloom-host/Petal
 
-based off the airplane multithreaded tracker this patch properly handles
+This patch was ported downstream from the Petal fork, and is derived from
+the Airplane fork by Paul Sauve
+
+Based off the Airplane multithreaded tracker, this patch properly handles
 concurrent accesses everywhere, as well as being much simpler to maintain
 
-some things are too unsafe to run off the main thread so we don't attempt to do
-that. this multithreaded tracker remains accurate, non-breaking and fast
+Some things are too unsafe to run off the main thread so we don't attempt to do
+that. This multithreaded tracker remains accurate, non-breaking and fast.
 
-we also learned from pufferfish core that changes have to be sent ordered
-now we do that in an optimized way
-
-diff --git a/src/main/java/org/deepslatemc/tracker/MultithreadedTracker.java b/src/main/java/org/deepslatemc/tracker/MultithreadedTracker.java
+diff --git a/src/main/java/dev/etil/mirai/MiraiConfig.java b/src/main/java/dev/etil/mirai/MiraiConfig.java
+index cc44fee20de5ca11956cf405a10af12a6656ea7f..96e2018133959cb1ae9bbaf79f96717eb35fe57c 100644
+--- a/src/main/java/dev/etil/mirai/MiraiConfig.java
++++ b/src/main/java/dev/etil/mirai/MiraiConfig.java
+@@ -280,4 +280,16 @@ public class MiraiConfig {
+         else
+             Bukkit.getLogger().log(Level.INFO, "Using " + asyncPathfindingMaxThreads + " threads for Async Pathfinding");
+     }
++
++    public static boolean enableAsyncEntityTracker;
++    public static boolean enableAsyncEntityTrackerInitialized;
++    private static void asyncEntityTracker() {
++        boolean temp = getBoolean("enable-async-entity-tracker", true,
++            "Whether or not async entity tracking should be enabled.",
++            "You may encounter issues with NPCs.");
++        if (!enableAsyncEntityTrackerInitialized) {
++            enableAsyncEntityTrackerInitialized = true;
++            enableAsyncEntityTracker = temp;
++        }
++    }
+ }
+diff --git a/src/main/java/dev/etil/mirai/tracker/MultithreadedTracker.java b/src/main/java/dev/etil/mirai/tracker/MultithreadedTracker.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d27b7224ed2bcc63386dc46c33bfb8b272d91f92
+index 0000000000000000000000000000000000000000..a18dde470c501cfcc8a07ae0cb24fbcf0fd00749
 --- /dev/null
-+++ b/src/main/java/org/deepslatemc/tracker/MultithreadedTracker.java
++++ b/src/main/java/dev/etil/mirai/tracker/MultithreadedTracker.java
 @@ -0,0 +1,154 @@
-+package org.deepslatemc.tracker;
++package dev.etil.mirai.tracker;
 +
 +import com.google.common.util.concurrent.ThreadFactoryBuilder;
 +import io.papermc.paper.util.maplist.IteratorSafeOrderedReferenceSet;
@@ -45,7 +66,7 @@ index 0000000000000000000000000000000000000000..d27b7224ed2bcc63386dc46c33bfb8b2
 +
 +    private static final int parallelism = Math.max(4, Runtime.getRuntime().availableProcessors());
 +    private static final Executor trackerExecutor = Executors.newFixedThreadPool(parallelism, new ThreadFactoryBuilder()
-+            .setNameFormat("Deepslate-tracker-%d")
++            .setNameFormat("mirai-tracker-%d")
 +            .setPriority(Thread.NORM_PRIORITY - 2)
 +            .build());
 +
@@ -167,7 +188,7 @@ index 0000000000000000000000000000000000000000..d27b7224ed2bcc63386dc46c33bfb8b2
 +                    if (trackerStage == TrackerStage.SEND_CHANGES) {
 +                        entityTracker.serverEntity.sendChanges();
 +                    } else if (trackerStage == TrackerStage.UPDATE_PLAYERS) {
-+                        entityTracker.updatePlayers(entityTracker.entity.getPlayersInTrackRange());
++                        entityTracker.updatePlayers(chunkMap.level.players());
 +                    }
 +                }
 +            }
@@ -175,8 +196,37 @@ index 0000000000000000000000000000000000000000..d27b7224ed2bcc63386dc46c33bfb8b2
 +    }
 +
 +}
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
+index 7ce9ebba8ce304d1f3f21d4f15ee5f3560d7700b..d076b1a4429dcadb01bf2e1a5e09d500baef08d0 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperEventManager.java
+@@ -4,6 +4,8 @@ import co.aikar.timings.TimedEventExecutor;
+ import com.destroystokyo.paper.event.server.ServerExceptionEvent;
+ import com.destroystokyo.paper.exception.ServerEventException;
+ import com.google.common.collect.Sets;
++import dev.etil.mirai.MiraiConfig;
++import net.minecraft.server.MinecraftServer;
+ import org.bukkit.Server;
+ import org.bukkit.Warning;
+ import org.bukkit.event.Event;
+@@ -39,7 +41,14 @@ class PaperEventManager {
+         if (event.isAsynchronous() && this.server.isPrimaryThread()) {
+             throw new IllegalStateException(event.getEventName() + " may only be triggered asynchronously.");
+         } else if (!event.isAsynchronous() && !this.server.isPrimaryThread() && !this.server.isStopping()) {
+-            throw new IllegalStateException(event.getEventName() + " may only be triggered synchronously.");
++            // Mirai start
++            if(MiraiConfig.enableAsyncEntityTracker) {
++                MinecraftServer.getServer().executeBlocking(event::callEvent);
++                return;
++            } else {
++                throw new IllegalStateException(event.getEventName() + " may only be triggered synchronously.");
++            }
++            // Mirai end
+         }
+ 
+         HandlerList handlers = event.getHandlers();
 diff --git a/src/main/java/io/papermc/paper/util/maplist/IteratorSafeOrderedReferenceSet.java b/src/main/java/io/papermc/paper/util/maplist/IteratorSafeOrderedReferenceSet.java
-index 0fd814f1d65c111266a2b20f86561839a4cef755..169ac3ad1b1e8e3e1874ada2471e478233c6ada7 100644
+index 0fd814f1d65c111266a2b20f86561839a4cef755..dc06747df171678c8531e1153c5fa9b80b70baed 100644
 --- a/src/main/java/io/papermc/paper/util/maplist/IteratorSafeOrderedReferenceSet.java
 +++ b/src/main/java/io/papermc/paper/util/maplist/IteratorSafeOrderedReferenceSet.java
 @@ -15,7 +15,7 @@ public final class IteratorSafeOrderedReferenceSet<E> {
@@ -184,33 +234,42 @@ index 0fd814f1d65c111266a2b20f86561839a4cef755..169ac3ad1b1e8e3e1874ada2471e4782
      /* list impl */
      protected E[] listElements;
 -    protected int listSize;
-+    protected int listSize; public int getListSize() { return this.listSize; } // Deepslate - expose listSize
++    protected int listSize; public int getListSize() { return this.listSize; } // Mirai - expose listSize
  
      protected final double maxFragFactor;
  
 diff --git a/src/main/java/io/papermc/paper/world/ChunkEntitySlices.java b/src/main/java/io/papermc/paper/world/ChunkEntitySlices.java
-index f597d65d56964297eeeed6c7e77703764178fee0..665c377e2d0d342f4dcc89c4cbdfcc9e4b96e95c 100644
+index 1e380c5ab6902495a610839e4f95b4176157bece..24d1962d42fc29e3f8710a36e7c86328a1411996 100644
 --- a/src/main/java/io/papermc/paper/world/ChunkEntitySlices.java
 +++ b/src/main/java/io/papermc/paper/world/ChunkEntitySlices.java
-@@ -35,7 +35,7 @@ public final class ChunkEntitySlices {
+@@ -36,7 +36,7 @@ public final class ChunkEntitySlices {
      protected final EntityCollectionBySection allEntities;
      protected final EntityCollectionBySection hardCollidingEntities;
      protected final Reference2ObjectOpenHashMap<Class<? extends Entity>, EntityCollectionBySection> entitiesByClass;
 -    protected final EntityList entities = new EntityList();
 +    public final EntityList entities = new EntityList();
  
-     public ChunkHolder.FullChunkStatus status;
+     public FullChunkStatus status;
  
 diff --git a/src/main/java/net/minecraft/server/level/ChunkMap.java b/src/main/java/net/minecraft/server/level/ChunkMap.java
-index ceaa44e8fbf02aef36f5ae663269dfc1026e4086..71d9caa4dfb16ea58d13e3e8d165dae6c9a67176 100644
+index fc382265dd3bb4b7936dbad4873fee5d03a556c6..701e7f9e659d57a5be940b23db30de1aa754cf04 100644
 --- a/src/main/java/net/minecraft/server/level/ChunkMap.java
 +++ b/src/main/java/net/minecraft/server/level/ChunkMap.java
-@@ -1236,8 +1236,37 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
-         entity.tracker = null; // Paper - We're no longer tracked
+@@ -52,6 +52,8 @@ import java.util.function.IntFunction;
+ import java.util.function.IntSupplier;
+ import java.util.function.Supplier;
+ import javax.annotation.Nullable;
++
++import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+ import net.minecraft.CrashReport;
+ import net.minecraft.CrashReportCategory;
+ import net.minecraft.ReportedException;
+@@ -1180,7 +1182,34 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
      }
+     // Paper end - optimised tracker
  
-+    // Deepslate start - multithreaded tracker
-+    private @Nullable org.deepslatemc.tracker.MultithreadedTracker multithreadedTracker;
++    // Mirai start - multithreaded tracker
++    private @Nullable dev.etil.mirai.tracker.MultithreadedTracker multithreadedTracker;
 +    private final java.util.concurrent.ConcurrentLinkedQueue<Runnable> trackerMainThreadTasks = new java.util.concurrent.ConcurrentLinkedQueue<>();
 +    private boolean tracking = false;
 +
@@ -222,11 +281,10 @@ index ceaa44e8fbf02aef36f5ae663269dfc1026e4086..71d9caa4dfb16ea58d13e3e8d165dae6
 +        }
 +    }
 +
-     // Paper start - optimised tracker
-     private final void processTrackQueue() {
-+        if (true) {
+     protected void tick() {
++        if (dev.etil.mirai.MiraiConfig.enableAsyncEntityTracker) {
 +            if (this.multithreadedTracker == null) {
-+                this.multithreadedTracker = new org.deepslatemc.tracker.MultithreadedTracker(this.level.chunkSource.entityTickingChunks, this.trackerMainThreadTasks);
++                this.multithreadedTracker = new dev.etil.mirai.tracker.MultithreadedTracker(this.level.chunkSource.entityTickingChunks, this.trackerMainThreadTasks);
 +            }
 +
 +            this.tracking = true;
@@ -237,56 +295,77 @@ index ceaa44e8fbf02aef36f5ae663269dfc1026e4086..71d9caa4dfb16ea58d13e3e8d165dae6
 +            }
 +            return;
 +        }
-+        // Deepslate end
-+
-+        this.level.timings.tracker1.startTiming();
-         //this.level.timings.tracker1.startTiming(); // Purpur
-         try {
-             for (TrackedEntity tracker : this.entityMap.values()) {
-@@ -1461,11 +1490,11 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
++        // Mirai end
+         // Paper start - optimized tracker
+         if (true) {
+             this.processTrackQueue();
+@@ -1323,11 +1352,11 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
  
      public class TrackedEntity {
  
--        final ServerEntity serverEntity;
+-        public final ServerEntity serverEntity;
 -        final Entity entity;
-+        public final ServerEntity serverEntity; // Deepslate -> public
-+        public final Entity entity; // Deepslate -> public
++        public final ServerEntity serverEntity; // Mirai -> public
++        public final Entity entity; // Mirai -> public
          private final int range;
          SectionPos lastSectionPos;
--        public final Set<ServerPlayerConnection> seenBy = new ReferenceOpenHashSet<>(); // Paper - optimise map impl
-+        public final Set<ServerPlayerConnection> seenBy = it.unimi.dsi.fastutil.objects.ReferenceSets.synchronize(new ReferenceOpenHashSet<>()); // Paper - optimise map impl // Deepslate - sync
+-        public final Set<ServerPlayerConnection> seenBy = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(); // Paper - optimise map impl
++        public final Set<ServerPlayerConnection> seenBy = it.unimi.dsi.fastutil.objects.ReferenceSets.synchronize(new ReferenceOpenHashSet<>()); // Paper - optimise map impl // Mirai - sync
  
          public TrackedEntity(Entity entity, int i, int j, boolean flag) {
              this.serverEntity = new ServerEntity(ChunkMap.this.level, entity, j, flag, this::broadcast, this.seenBy); // CraftBukkit
-@@ -1477,7 +1506,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
-         // Paper start - use distance map to optimise tracker
-         com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> lastTrackerCandidates;
+@@ -1381,14 +1410,12 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+         }
  
--        final void updatePlayers(com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> newTrackerCandidates) {
-+        public final void updatePlayers(com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> newTrackerCandidates) { // Deepslate -> public
-             com.destroystokyo.paper.util.misc.PooledLinkedHashSets.PooledObjectLinkedOpenHashSet<ServerPlayer> oldTrackerCandidates = this.lastTrackerCandidates;
-             this.lastTrackerCandidates = newTrackerCandidates;
+         public void broadcast(Packet<?> packet) {
+-            Iterator iterator = this.seenBy.iterator();
+-
+-            while (iterator.hasNext()) {
+-                ServerPlayerConnection serverplayerconnection = (ServerPlayerConnection) iterator.next();
++            // Mirai start - avoid NPE
++            for (ServerPlayerConnection serverplayerconnection : this.seenBy.toArray(new ServerPlayerConnection[0])) {
  
-@@ -1549,7 +1578,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+                 serverplayerconnection.send(packet);
+             }
+-
++            // Mirai end
+         }
+ 
+         public void broadcastAndSend(Packet<?> packet) {
+@@ -1400,18 +1427,16 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+         }
+ 
+         public void broadcastRemoved() {
+-            Iterator iterator = this.seenBy.iterator();
+-
+-            while (iterator.hasNext()) {
+-                ServerPlayerConnection serverplayerconnection = (ServerPlayerConnection) iterator.next();
++            // Miria start - avoid NPE
++            for (ServerPlayerConnection serverplayerconnection : this.seenBy.toArray(new ServerPlayerConnection[0])) {
+ 
+                 this.serverEntity.removePairing(serverplayerconnection.getPlayer());
+             }
+-
++            // Mirai end
          }
  
          public void removePlayer(ServerPlayer player) {
 -            org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot
-+            //org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot // Deepslate - we can remove async too
++            //org.spigotmc.AsyncCatcher.catchOp("player tracker clear"); // Spigot // Mirai - we can remove async too
              if (this.seenBy.remove(player.connection)) {
                  this.serverEntity.removePairing(player);
              }
-@@ -1557,7 +1586,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -1419,7 +1444,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
          }
  
          public void updatePlayer(ServerPlayer player) {
 -            org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot
-+            //org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot // Deepslate - we can update async
++            //org.spigotmc.AsyncCatcher.catchOp("player tracker update"); // Spigot // Mirai - we can update async
              if (player != this.entity) {
-                 // Paper start - remove allocation of Vec3D here
-                 // Vec3 vec3d = player.position().subtract(this.entity.position());
+                 Vec3 vec3d = player.position().subtract(this.entity.position());
+                 int i = ChunkMap.this.getPlayerViewDistance(player);
 diff --git a/src/main/java/net/minecraft/server/level/ServerBossEvent.java b/src/main/java/net/minecraft/server/level/ServerBossEvent.java
-index ca42c2642a729b90d22b968af7258f3aee72e14b..40261b80d947a6be43465013fae5532197cfe721 100644
+index ca42c2642a729b90d22b968af7258f3aee72e14b..c4d6d5be09c788bbc062c50d8547538eb84530b4 100644
 --- a/src/main/java/net/minecraft/server/level/ServerBossEvent.java
 +++ b/src/main/java/net/minecraft/server/level/ServerBossEvent.java
 @@ -13,7 +13,7 @@ import net.minecraft.util.Mth;
@@ -294,55 +373,55 @@ index ca42c2642a729b90d22b968af7258f3aee72e14b..40261b80d947a6be43465013fae55321
  
  public class ServerBossEvent extends BossEvent {
 -    private final Set<ServerPlayer> players = Sets.newHashSet();
-+    private final Set<ServerPlayer> players = Sets.newConcurrentHashSet(); // Deepslate - players can be removed in async tracking
++    private final Set<ServerPlayer> players = Sets.newConcurrentHashSet(); // Mirai - players can be removed in async tracking
      private final Set<ServerPlayer> unmodifiablePlayers = Collections.unmodifiableSet(this.players);
      public boolean visible = true;
  
 diff --git a/src/main/java/net/minecraft/server/level/ServerEntity.java b/src/main/java/net/minecraft/server/level/ServerEntity.java
-index 7880cdcaf12197f6b36777c51b2859f2463f1595..281866d9fee4e2c544030eea135857b618e2ba57 100644
+index cdabcaeb1edf249e347ed62ce78c251cd94556f7..4817813b753ba78b95fe785612486d2439a8a6ee 100644
 --- a/src/main/java/net/minecraft/server/level/ServerEntity.java
 +++ b/src/main/java/net/minecraft/server/level/ServerEntity.java
-@@ -250,14 +250,18 @@ public class ServerEntity {
+@@ -291,7 +291,11 @@ public class ServerEntity {
  
      public void removePairing(ServerPlayer player) {
          this.entity.stopSeenByPlayer(player);
 -        player.connection.send(new ClientboundRemoveEntitiesPacket(new int[]{this.entity.getId()}));
-+        // Deepslate start - ensure main thread
-+        ((ServerLevel) this.entity.level).chunkSource.chunkMap.runOnTrackerMainThread(() ->
++        // Mirai start - ensure main thread
++        ((ServerLevel) this.entity.level()).chunkSource.chunkMap.runOnTrackerMainThread(() ->
 +            player.connection.send(new ClientboundRemoveEntitiesPacket(new int[]{this.entity.getId()}))
 +        );
-+        // Deepslate end
++        // Mirai end
      }
  
      public void addPairing(ServerPlayer player) {
-         ServerGamePacketListenerImpl playerconnection = player.connection;
+@@ -299,7 +303,7 @@ public class ServerEntity {
  
-         Objects.requireNonNull(player.connection);
--        this.sendPairingData(playerconnection::send, player); // CraftBukkit - add player
-+        ((ServerLevel) this.entity.level).chunkSource.chunkMap.runOnTrackerMainThread(() -> this.sendPairingData(playerconnection::send, player)); // CraftBukkit - add player // Deepslate - main thread
+         Objects.requireNonNull(list);
+         this.sendPairingData(player, list::add);
+-        player.connection.send(new ClientboundBundlePacket(list));
++        ((ServerLevel) this.entity.level()).chunkSource.chunkMap.runOnTrackerMainThread(() -> player.connection.send(new ClientboundBundlePacket(list))); // Mirai - main thread
          this.entity.startSeenByPlayer(player);
      }
  
-@@ -363,19 +367,30 @@ public class ServerEntity {
-         SynchedEntityData datawatcher = this.entity.getEntityData();
+@@ -393,19 +397,29 @@ public class ServerEntity {
  
-         if (datawatcher.isDirty()) {
--            this.broadcastAndSend(new ClientboundSetEntityDataPacket(this.entity.getId(), datawatcher, false));
-+            // Deepslate start - sync
-+            ((ServerLevel) this.entity.level).chunkSource.chunkMap.runOnTrackerMainThread(() ->
-+                this.broadcastAndSend(new ClientboundSetEntityDataPacket(this.entity.getId(), datawatcher, false))
+         if (list != null) {
+             this.trackedDataValues = datawatcher.getNonDefaultValues();
+-            this.broadcastAndSend(new ClientboundSetEntityDataPacket(this.entity.getId(), list));
++            // Mirai start - sync
++            ((ServerLevel) this.entity.level()).chunkSource.chunkMap.runOnTrackerMainThread(() ->
++                this.broadcastAndSend(new ClientboundSetEntityDataPacket(this.entity.getId(), list))
 +            );
-+            // Deepslate end
++            // Mirai end
          }
  
          if (this.entity instanceof LivingEntity) {
              Set<AttributeInstance> set = ((LivingEntity) this.entity).getAttributes().getDirtyAttributes();
  
              if (!set.isEmpty()) {
-+                // Deepslate start - sync
++                // Mirai start - sync
 +                final var copy = Lists.newArrayList(set);
-+                ((ServerLevel) this.entity.level).chunkSource.chunkMap.runOnTrackerMainThread(() -> {
-+
++                ((ServerLevel) this.entity.level()).chunkSource.chunkMap.runOnTrackerMainThread(() -> {
                  // CraftBukkit start - Send scaled max health
                  if (this.entity instanceof ServerPlayer) {
 -                    ((ServerPlayer) this.entity).getBukkitEntity().injectScaledMaxHealth(set, false);
@@ -350,10 +429,23 @@ index 7880cdcaf12197f6b36777c51b2859f2463f1595..281866d9fee4e2c544030eea135857b6
                  }
                  // CraftBukkit end
 -                this.broadcastAndSend(new ClientboundUpdateAttributesPacket(this.entity.getId(), set));
-+                this.broadcastAndSend(new ClientboundUpdateAttributesPacket(this.entity.getId(), copy));
++                    this.broadcastAndSend(new ClientboundUpdateAttributesPacket(this.entity.getId(), copy));
 +
 +                });
-+                // Deepslate end
++                // Mirai end
              }
  
              set.clear();
+diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
+index b03c77475ae3037b620ead84c1540a3288f0e676..280ac16fcd4f6375094e5ba7ebdf6ad41727b2cb 100644
+--- a/src/main/java/net/minecraft/server/level/ServerLevel.java
++++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
+@@ -2621,7 +2621,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
+ 
+     @Override
+     public LevelEntityGetter<Entity> getEntities() {
+-        org.spigotmc.AsyncCatcher.catchOp("Chunk getEntities call"); // Spigot
++        // org.spigotmc.AsyncCatcher.catchOp("Chunk getEntities call"); // Spigot // Mirai
+         return this.entityLookup; // Paper - rewrite chunk system
+     }
+ 
