@@ -4,23 +4,8 @@ Date: Tue, 21 Nov 2023 21:59:57 +0700
 Subject: [PATCH] Do not process chat/commands before player has joined
 
 
-diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-index 426ae4086adc0180e3f3ba06cf6c005476ca891e..02dc7f154098313ff58a688ac5080457bc108164 100644
---- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-+++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
-@@ -157,4 +157,9 @@ public class DeepslateConfig {
-     private static void allowAnyUsername() {
-         allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
-     }
-+
-+    public static boolean doNotProcessChatCommands = true;
-+    private static void  doNotProcessChatCommands() {
-+        doNotProcessChatCommands = getBoolean("settings.do-not-process-chat-commands", doNotProcessChatCommands);
-+    }
- }
-\ No newline at end of file
 diff --git a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index a7e82f95db5c6c054175192f019072006a3ef31f..e3c1a28e80611aef4673fb7ef46892e6b09418c7 100644
+index 552cc2ee9b77958216a237a92e25317551649b56..96b5a5378b65d1f8efb3a7a5bc04ea688f69b6f8 100644
 --- a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -6,6 +6,7 @@ import com.mojang.authlib.GameProfile;
@@ -40,3 +25,18 @@ index a7e82f95db5c6c054175192f019072006a3ef31f..e3c1a28e80611aef4673fb7ef46892e6
          } else {
              Optional<LastSeenMessages> optional = this.unpackAndApplyLastSeen(acknowledgment);
  
+diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
+index 4d30c26a1803eb86f9c98c1cff616d16458efa6d..dcd987d30f8bb939f7ea7cfbccfafd486b77d7b6 100644
+--- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateConfig.java
+@@ -157,4 +157,9 @@ public class DeepslateConfig {
+     private static void allowAnyUsername() {
+         allowAnyUsername = getBoolean("settings.player.allow-any-username", allowAnyUsername);
+     }
++
++    public static boolean doNotProcessChatCommands = true;
++    private static void  doNotProcessChatCommands() {
++        doNotProcessChatCommands = getBoolean("settings.do-not-process-chat-commands", doNotProcessChatCommands);
++    }
+ }
+\ No newline at end of file

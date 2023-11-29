@@ -4,25 +4,8 @@ Date: Tue, 21 Nov 2023 18:52:22 +0700
 Subject: [PATCH] Boat Settings
 
 
-diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
-index 5d16d2250bae9c982a0af9ad2580a63532b140f7..9eede8eb7fefc414f3a1207cd3ca2b33deb5ea13 100644
---- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
-+++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
-@@ -77,4 +77,11 @@ public class DeepslateWorldConfig {
-         final Map<String, Object> value = DeepslateConfig.getMap("world-settings." + worldName + "." + path, null);
-         return value.isEmpty() ? fallback : value;
-     }
-+
-+    public boolean dontEjectPlayerFromBoatUnderwater = true;
-+    public boolean alwaysAllowToEnterTheBoat = true;
-+    private void boatFeatures() {
-+        dontEjectPlayerFromBoatUnderwater = getBoolean("gameplay-mechanics.boat.dont-eject-players-from-boat-underwater", dontEjectPlayerFromBoatUnderwater);
-+        alwaysAllowToEnterTheBoat = getBoolean("gameplay-mechanics.boat.always-allow-to-enter-the-boat", alwaysAllowToEnterTheBoat);
-+    }
- }
-\ No newline at end of file
 diff --git a/src/main/java/net/minecraft/world/entity/vehicle/Boat.java b/src/main/java/net/minecraft/world/entity/vehicle/Boat.java
-index 886a35937bfbb5b46d021fd42f89614f0df5d80f..6a433c616b6d7603f7277719d12519005799126c 100644
+index c314febb75a85ef12051bde392c5b57e9c5d85ac..7f8a42a334262d79bfc9f4b84272d64dad389d21 100644
 --- a/src/main/java/net/minecraft/world/entity/vehicle/Boat.java
 +++ b/src/main/java/net/minecraft/world/entity/vehicle/Boat.java
 @@ -401,7 +401,18 @@ public class Boat extends Entity implements VariantHolder<Boat.Type> {
@@ -75,3 +58,20 @@ index 886a35937bfbb5b46d021fd42f89614f0df5d80f..6a433c616b6d7603f7277719d1251900
      }
  
      protected int getMaxPassengers() {
+diff --git a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
+index 66f8714ec2fe1b0cd55a7939adac6ebdc108dd93..0e0ef36e9a7c8b1e943b5eff8ccae5b6f2988c10 100644
+--- a/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
++++ b/src/main/java/org/deepslatemc/deepslate/configuration/DeepslateWorldConfig.java
+@@ -77,4 +77,11 @@ public class DeepslateWorldConfig {
+         final Map<String, Object> value = DeepslateConfig.getMap("world-settings." + worldName + "." + path, null);
+         return value.isEmpty() ? fallback : value;
+     }
++
++    public boolean dontEjectPlayerFromBoatUnderwater = true;
++    public boolean alwaysAllowToEnterTheBoat = true;
++    private void boatFeatures() {
++        dontEjectPlayerFromBoatUnderwater = getBoolean("gameplay-mechanics.boat.dont-eject-players-from-boat-underwater", dontEjectPlayerFromBoatUnderwater);
++        alwaysAllowToEnterTheBoat = getBoolean("gameplay-mechanics.boat.always-allow-to-enter-the-boat", alwaysAllowToEnterTheBoat);
++    }
+ }
+\ No newline at end of file
